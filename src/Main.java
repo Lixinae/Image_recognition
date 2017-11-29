@@ -1,14 +1,13 @@
 import java.util.ArrayList;
 
-public class main {
+public class Main {
 
 
-    public static int recup_image(String arg){
+    private static int recup_image(String arg){
         return 0;
     }
-    public static ArrayList<Integer> recup_image_database(){
-        ArrayList<Integer> test = new ArrayList<>();
-        return test;
+    private static ArrayList<Integer> recup_image_database(){
+        return new ArrayList<>();
     }
     public static void main(String[] args){
         System.out.println("deb");
