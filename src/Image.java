@@ -2,6 +2,7 @@ public class Image {
     private int moyenne_rgb;
     private int data2;
     private int id_image;
+    private Pixel im[][];
     private String name;
 
     public Image(int id_image){
