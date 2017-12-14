@@ -19,4 +19,20 @@ public class Pixel {
                 ", a=" + a +
                 '}';
     }
+
+    public int getA() {
+        return a;
+    }
+
+    public int getB() {
+        return b;
+    }
+
+    public int getG() {
+        return g;
+    }
+
+    public int getR() {
+        return r;
+    }
 }

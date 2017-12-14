@@ -8,20 +8,31 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 public class Image {
-    private int moyenne_rgb;
-    private int data2;
+    private Pixel moyenne_rgb;
+    private HSV[][] histoHSV;
     private int id_image;
     private Pixel[][] pixels2D; // Largeur / Hauteur pour les coordonnées
     private String pathToImage;
+    private String name;
     private int width;
     private int height;
 
     public Image(int id_image, String pathToImage) {
-        moyenne_rgb = calcul_moyenne_rgb();
-        data2 = calcul_data2();
         this.id_image = id_image;
         this.pathToImage = pathToImage;
+        this.name = constructName(pathToImage);
         initPixelTab();
+        histoHSV = calcul_HSV();
+        moyenne_rgb = calcul_moyenne_rgb();
+    }
+
+    private String constructName(String path) {
+        String[] s = path.split("/");
+        return s[s.length-1];
+    }
+
+    private String getName() {
+        return name;
     }
 
     /**
@@ -118,15 +129,68 @@ public class Image {
         }
     }
 
-    private int calcul_moyenne_rgb() {
-        return 0;
+    public void printHSV() {
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                System.out.println("HSV[" + i + "][" + j + "] =" + histoHSV[i][j]);
+            }
+        }
     }
 
-    private int calcul_data2() {
-        return 0;
+    private Pixel calcul_moyenne_rgb() {
+        int[] p = {0,0,0,0};
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                p[0]+=pixels2D[i][j].getR();
+                p[1]+=pixels2D[i][j].getG();
+                p[2]+=pixels2D[i][j].getB();
+                p[3]+=pixels2D[i][j].getA();
+            }
+        }
+        for(int i=0;i<p.length;i++){
+            p[i]/=(width*height);
+        }
+        return new Pixel(p[0],p[1],p[2],p[3]);
+    }
+
+    private HSV[][] calcul_HSV() {
+        HSV[][] histo = new HSV[width][height];
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                histo[i][j] = recupHSV(pixels2D[i][j]);
+            }
+        }
+        return histo;
+    }
+
+    private HSV recupHSV(Pixel pixel) {
+        int r = pixel.getR();
+        int g = pixel.getG();
+        int b = pixel.getB();
+        int max = r>g?(r>b?r:b):(g>b?g:b);
+        int min = r<g?(r<b?r:b):(g<b?g:b);
+        int h=0;
+        if(max!=min){
+            if(max==r){
+                h=60*((g-b)/(max-min))+360;
+            }
+            else if(max==g){
+                h=60*((b-r)/(max-min))+120;
+            }
+            else{
+                h=60*((r-g)/(max-min))+240;
+            }
+        }
+        h=h%360;
+        return new HSV(h,max==0?0:1-min/max,max);
     }
 
     private static int getUnsignedIntFromByte(byte x) {
         return Byte.toUnsignedInt(x);
+    }
+
+    @Override
+    public String toString() {
+        return "la moyenne rgb de l'image "+name+" est de "+moyenne_rgb;
     }
 }

@@ -44,7 +44,9 @@ public class Main {
             image_database.add(new Image(img,"./image_cible/test.png"));
         }
         Image img =new Image(0,"./image_cible/test.png");
-        img.printTab();
+        //img.printTab();
+        System.out.println(img);
+        img.printHSV();
     }
 
 
