@@ -40,10 +40,11 @@ public class Main {
         //https://docs.oracle.com/javase/7/docs/api/java/awt/image/BufferedImage.html
         ArrayList<Integer> image_id_database = recup_image_database("");
         ArrayList<Image> image_database = new ArrayList<>();
+        String pathToImage = "./image_cible/test.png";
         for (int img : image_id_database) {
-            image_database.add(new Image(img,"./image_cible/test.png"));
+            image_database.add(new Image(img, pathToImage));
         }
-        Image img =new Image(0,"./image_cible/test.png");
+        Image img = new Image(0, pathToImage);
         //img.printTab();
         System.out.println(img);
         img.printHSV();

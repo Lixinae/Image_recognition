@@ -28,7 +28,7 @@ public class Image {
 
     private String constructName(String path) {
         String[] s = path.split("/");
-        return s[s.length-1];
+        return s[s.length - 1];
     }
 
     private String getName() {
@@ -45,6 +45,7 @@ public class Image {
 
     /**
      * Extrait le tableau de bytes de l'image
+     *
      * @return Le tableau de bytes contenant les informations
      */
     private Optional<byte[]> extractBytes() {
@@ -68,29 +69,46 @@ public class Image {
     }
 
     /**
-     *
      * @return Le tableau de pixel 2D de l'image s'il ny pas de probleme , optional.empty() sinon
      */
     private Optional<Pixel[][]> getPixelsTabFromImg() {
         Optional<byte[]> optbyte = extractBytes();
-        byte[] data;
+
         if (optbyte.isPresent()) {
-            data = optbyte.get();
+            byte[] data = optbyte.get();
             int indAdv = 0;
-            ArrayList<Pixel> pixels = new ArrayList<>();
-            for (int i = 0; i < data.length; i += 4) {
-                int a = getUnsignedIntFromByte(data[i + indAdv]);
-                indAdv++;
-                int b = getUnsignedIntFromByte(data[i + indAdv]);
-                indAdv++;
-                int g = getUnsignedIntFromByte(data[i + indAdv]);
-                indAdv++;
-                int r = getUnsignedIntFromByte(data[i + indAdv]);
-                indAdv = 0;
-                Pixel p = new Pixel(r, g, b, a);
-                pixels.add(p);
+            if (pathToImage.endsWith("jpg") || pathToImage.endsWith("jpeg")) {
+                System.out.println("jpg ending");
+                ArrayList<Pixel> pixels = new ArrayList<>();
+                for (int i = 0; i < data.length; i += 3) {
+                    int b = getUnsignedIntFromByte(data[i + indAdv]);
+                    indAdv++;
+                    int g = getUnsignedIntFromByte(data[i + indAdv]);
+                    indAdv++;
+                    int r = getUnsignedIntFromByte(data[i + indAdv]);
+                    indAdv = 0;
+                    Pixel p = new Pixel(r, g, b, 0);
+                    pixels.add(p);
+                }
+                return Optional.of(getPixelsFromList(pixels));
+            } else {
+                System.out.println("png ending");
+                ArrayList<Pixel> pixels = new ArrayList<>();
+                for (int i = 0; i < data.length; i += 4) {
+                    int a = getUnsignedIntFromByte(data[i + indAdv]);
+                    indAdv++;
+                    int b = getUnsignedIntFromByte(data[i + indAdv]);
+                    indAdv++;
+                    int g = getUnsignedIntFromByte(data[i + indAdv]);
+                    indAdv++;
+                    int r = getUnsignedIntFromByte(data[i + indAdv]);
+                    indAdv = 0;
+                    Pixel p = new Pixel(r, g, b, a);
+                    pixels.add(p);
+                }
+                return Optional.of(getPixelsFromList(pixels));
             }
-            return Optional.of(getPixelsFromList(pixels));
+
         }
         return Optional.empty();
 
@@ -98,6 +116,7 @@ public class Image {
 
     /**
      * Crée un tableau 2D de Pixel à partir de la liste des pixel de l'image
+     *
      * @param pixels Liste de tous les pixels de l'image
      * @return Un tableau 2D de pixel
      */
@@ -138,19 +157,19 @@ public class Image {
     }
 
     private Pixel calcul_moyenne_rgb() {
-        int[] p = {0,0,0,0};
+        int[] p = {0, 0, 0, 0};
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                p[0]+=pixels2D[i][j].getR();
-                p[1]+=pixels2D[i][j].getG();
-                p[2]+=pixels2D[i][j].getB();
-                p[3]+=pixels2D[i][j].getA();
+                p[0] += pixels2D[i][j].getR();
+                p[1] += pixels2D[i][j].getG();
+                p[2] += pixels2D[i][j].getB();
+                p[3] += pixels2D[i][j].getA();
             }
         }
-        for(int i=0;i<p.length;i++){
-            p[i]/=(width*height);
+        for (int i = 0; i < p.length; i++) {
+            p[i] /= (width * height);
         }
-        return new Pixel(p[0],p[1],p[2],p[3]);
+        return new Pixel(p[0], p[1], p[2], p[3]);
     }
 
     private HSV[][] calcul_HSV() {
@@ -167,22 +186,20 @@ public class Image {
         int r = pixel.getR();
         int g = pixel.getG();
         int b = pixel.getB();
-        int max = r>g?(r>b?r:b):(g>b?g:b);
-        int min = r<g?(r<b?r:b):(g<b?g:b);
-        int h=0;
-        if(max!=min){
-            if(max==r){
-                h=60*((g-b)/(max-min))+360;
-            }
-            else if(max==g){
-                h=60*((b-r)/(max-min))+120;
-            }
-            else{
-                h=60*((r-g)/(max-min))+240;
+        int max = r > g ? (r > b ? r : b) : (g > b ? g : b);
+        int min = r < g ? (r < b ? r : b) : (g < b ? g : b);
+        int h = 0;
+        if (max != min) {
+            if (max == r) {
+                h = 60 * ((g - b) / (max - min)) + 360;
+            } else if (max == g) {
+                h = 60 * ((b - r) / (max - min)) + 120;
+            } else {
+                h = 60 * ((r - g) / (max - min)) + 240;
             }
         }
-        h=h%360;
-        return new HSV(h,max==0?0:1-min/max,max);
+        h = h % 360;
+        return new HSV(h, max == 0 ? 0 : 1 - min / max, max);
     }
 
     private static int getUnsignedIntFromByte(byte x) {
@@ -191,6 +208,6 @@ public class Image {
 
     @Override
     public String toString() {
-        return "la moyenne rgb de l'image "+name+" est de "+moyenne_rgb;
+        return "la moyenne rgb de l'image " + name + " est de " + moyenne_rgb;
     }
 }
