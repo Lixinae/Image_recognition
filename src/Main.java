@@ -9,17 +9,17 @@ import java.util.ArrayList;
 public class Main {
 
 
-    private static BufferedImage recup_image() throws IOException {
-        //recup image dans image_cible
-        File f = new File("K:\\users\\kev\\documents\\Image_recognition\\image_cible\\cible1.jpg");
-        return ImageIO.read(f);
-
-    }
-
-    private static ArrayList<Integer> recup_image_database(String pathToFolder) {
-        //recup image dans image_base
-
-        return new ArrayList<>();
+    private static ArrayList<Image> recup_image_database(String pathToFolder) {
+        String[] listNomImage = new File(pathToFolder).list();
+        if(listNomImage==null){
+            System.out.println("dossier base vide");
+            throw new NullPointerException();
+        }
+        ArrayList<Image> listImage = new ArrayList<>();
+        for(String nomImage:listNomImage){
+            listImage.add(new Image(0,pathToFolder+"/"+nomImage));
+        }
+        return listImage;
     }
 
 
@@ -27,27 +27,15 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
-        System.out.println("deb");
         BufferedImage image = new BufferedImage(833, 1200, BufferedImage.TYPE_INT_ARGB);
-//        File f = null;
-//        try {
-//            image = recup_image();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-        //https://docs.oracle.com/javase/tutorial/2d/images/index.html
-        //https://www.programcreek.com/java-api-examples/index.php?class=java.awt.image.BufferedImage&method=setRGB
-        //https://docs.oracle.com/javase/7/docs/api/java/awt/image/BufferedImage.html
-        ArrayList<Integer> image_id_database = recup_image_database("");
-        ArrayList<Image> image_database = new ArrayList<>();
+        ArrayList<Image> image_database = recup_image_database("./image_base");
         String pathToImage = "./image_cible/test.png";
-        for (int img : image_id_database) {
-            image_database.add(new Image(img, pathToImage));
-        }
         Image img = new Image(0, pathToImage);
-        //img.printTab();
         System.out.println(img);
         img.printHSV();
+        for(Image i:image_database){
+            System.out.println(i);
+        }
     }
 
 
