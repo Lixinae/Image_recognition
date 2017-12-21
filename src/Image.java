@@ -26,12 +26,24 @@ public class Image {
         moyenne_rgb = calcul_moyenne_rgb();
     }
 
-    private String constructName(String path) {
-        String[] s = path.split("/");
-        return s[s.length - 1];
+    public double compare(Image i){
+        double d;
+        double r = Math.abs(i.moyenne_rgb.getR()-moyenne_rgb.getR());
+        double g = Math.abs(i.moyenne_rgb.getG()-moyenne_rgb.getG());
+        double b = Math.abs(i.moyenne_rgb.getB()-moyenne_rgb.getB());
+        d=r+g+b;
+        return d;
     }
 
-    private String getName() {
+    private String constructName(String path) {
+        String[] s = path.split("/");
+        String n = s[s.length - 1];
+        n = n.substring(0,n.length()-4); // on retire .jpg ou .png
+        n = n.replaceAll("[\\d]",""); // on retire les chiffres de fin
+        return n;
+    }
+
+    public String getName() {
         return name;
     }
 
@@ -78,7 +90,6 @@ public class Image {
             byte[] data = optbyte.get();
             int indAdv = 0;
             if (pathToImage.endsWith("jpg") || pathToImage.endsWith("jpeg")) {
-                System.out.println("jpg ending");
                 ArrayList<Pixel> pixels = new ArrayList<>();
                 for (int i = 0; i < data.length; i += 3) {
                     int b = getUnsignedIntFromByte(data[i + indAdv]);
@@ -92,7 +103,6 @@ public class Image {
                 }
                 return Optional.of(getPixelsFromList(pixels));
             } else {
-                System.out.println("png ending");
                 ArrayList<Pixel> pixels = new ArrayList<>();
                 for (int i = 0; i < data.length; i += 4) {
                     int a = getUnsignedIntFromByte(data[i + indAdv]);
@@ -208,6 +218,6 @@ public class Image {
 
     @Override
     public String toString() {
-        return "la moyenne rgb de l'image " + name + " est de " + moyenne_rgb;
+        return "la moyenne rgb de l'image " + pathToImage + " est de " + moyenne_rgb;
     }
 }

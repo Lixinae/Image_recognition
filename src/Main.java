@@ -29,13 +29,22 @@ public class Main {
 
         BufferedImage image = new BufferedImage(833, 1200, BufferedImage.TYPE_INT_ARGB);
         ArrayList<Image> image_database = recup_image_database("./image_base");
-        String pathToImage = "./image_cible/test.png";
+        String pathToImage = "./image_cible/cible2.jpg";
         Image img = new Image(0, pathToImage);
+        double max_diff = 100000;
+        String name = "";
         System.out.println(img);
-        img.printHSV();
         for(Image i:image_database){
             System.out.println(i);
+            double d = i.compare(img);
+            System.out.println("différence colorimétrique : "+ d);
+            System.out.println("");
+            if(max_diff>d){
+                max_diff = d;
+                name = i.getName();
+            }
         }
+        System.out.println("la cible est "+name);
     }
 
 
