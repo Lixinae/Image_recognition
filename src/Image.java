@@ -16,6 +16,7 @@ public class Image {
     private String name;
     private int width;
     private int height;
+    private int[][][] histo_color;
 
     public Image(int id_image, String pathToImage) {
         this.id_image = id_image;
@@ -24,6 +25,7 @@ public class Image {
         initPixelTab();
         histoHSV = calcul_HSV();
         moyenne_rgb = calcul_moyenne_rgb();
+        histo_color = calcul_histo_color();
     }
 
     public double compare(Image i){
@@ -190,6 +192,19 @@ public class Image {
             }
         }
         return histo;
+    }
+
+    private int[][][] calcul_histo_color(){
+        int[][][] hist = new int[5][5][5];
+        for(int i=0;i<width;i++){
+            for(int j=0;j<height;j++){
+                int r = (int)(pixels2D[i][j].getR()/51f - 0.01);
+                int g = (int)(pixels2D[i][j].getG()/51f - 0.01);
+                int b = (int)(pixels2D[i][j].getB()/51f - 0.01);
+                hist[r][g][b]++;
+            }
+        }
+        return hist;
     }
 
     private HSV recupHSV(Pixel pixel) {
