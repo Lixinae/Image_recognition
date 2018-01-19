@@ -4,6 +4,8 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -28,21 +30,63 @@ public class Image {
         histo_color = calcul_histo_color();
     }
 
-    public double compare(Image i){
-        double d;
-        double r = Math.abs(i.moyenne_rgb.getR()-moyenne_rgb.getR());
-        double g = Math.abs(i.moyenne_rgb.getG()-moyenne_rgb.getG());
-        double b = Math.abs(i.moyenne_rgb.getB()-moyenne_rgb.getB());
-        d=r+g+b;
-        return d;
+    public double compare(Image image) {
+
+        int[][][] histoI = image.histo_color;
+        double coef0 = 0, coef1 = 0, coef2 = 0, coef3 = 0, coef4 = 0;
+
+        for (int i = 0; i < histoI.length; i++) {
+            for (int j = 0; j < histoI[0].length; j++) {
+                for (int k = 0; k < histoI[0][0].length; k++) {
+                    switch (k) {
+                        case 0:
+                            coef0 += Math.pow(histo_color[i][j][k] - histoI[i][j][k], 2.0);
+                            break;
+                        case 1:
+                            coef1 += Math.pow(histo_color[i][j][k] - histoI[i][j][k], 2.0);
+                            break;
+                        case 2:
+                            coef2 += Math.pow(histo_color[i][j][k] - histoI[i][j][k], 2.0);
+                            break;
+                        case 3:
+                            coef3 += Math.pow(histo_color[i][j][k] - histoI[i][j][k], 2.0);
+                            break;
+                        case 4:
+                            coef4 += Math.pow(histo_color[i][j][k] - histoI[i][j][k], 2.0);
+                            break;
+                    }
+                }
+            }
+        }
+
+        System.out.println("coef0 = " + coef0);
+        System.out.println("coef1 = " + coef1);
+        System.out.println("coef2 = " + coef2);
+        System.out.println("coef3 = " + coef3);
+        System.out.println("coef4 = " + coef4);
+
+        return coef0 + coef1 + coef2 + coef3 + coef4;
+
+//        double d;
+//        double r = Math.abs(image.moyenne_rgb.getR()-moyenne_rgb.getR());
+//        double g = Math.abs(image.moyenne_rgb.getG()-moyenne_rgb.getG());
+//        double b = Math.abs(image.moyenne_rgb.getB()-moyenne_rgb.getB());
+//        d=r+g+b;
+//        return d;
     }
 
     private String constructName(String path) {
-        String[] s = path.split("/");
-        String n = s[s.length - 1];
-        n = n.substring(0,n.length()-4); // on retire .jpg ou .png
-        n = n.replaceAll("[\\d]",""); // on retire les chiffres de fin
-        return n;
+
+//        String[] s = path.split("/");
+//        String n = s[s.length - 1];
+//        n = n.substring(0,n.length()-4); // on retire .jpg ou .png
+//        n = n.replaceAll("[\\d]",""); // on retire les chiffres de fin
+        Path p = Paths.get(path);
+        String fileName = p.getFileName().toString();
+        int idx = fileName.lastIndexOf('.');
+        if (idx > 0)
+            fileName = fileName.substring(0, idx);
+        return fileName;
     }
 
     public String getName() {
@@ -194,13 +238,13 @@ public class Image {
         return histo;
     }
 
-    private int[][][] calcul_histo_color(){
+    private int[][][] calcul_histo_color() {
         int[][][] hist = new int[5][5][5];
-        for(int i=0;i<width;i++){
-            for(int j=0;j<height;j++){
-                int r = (int)(pixels2D[i][j].getR()/51f - 0.01);
-                int g = (int)(pixels2D[i][j].getG()/51f - 0.01);
-                int b = (int)(pixels2D[i][j].getB()/51f - 0.01);
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                int r = (int) (pixels2D[i][j].getR() / 51f - 0.01);
+                int g = (int) (pixels2D[i][j].getG() / 51f - 0.01);
+                int b = (int) (pixels2D[i][j].getB() / 51f - 0.01);
                 hist[r][g][b]++;
             }
         }

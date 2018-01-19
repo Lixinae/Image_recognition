@@ -5,19 +5,22 @@ import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Main {
 
 
     private static ArrayList<Image> recup_image_database(String pathToFolder) {
         String[] listNomImage = new File(pathToFolder).list();
-        if(listNomImage==null){
+        if (listNomImage == null) {
             System.out.println("dossier base vide");
             throw new NullPointerException();
         }
         ArrayList<Image> listImage = new ArrayList<>();
-        for(String nomImage:listNomImage){
-            listImage.add(new Image(0,pathToFolder+"/"+nomImage));
+        for (String nomImage : listNomImage) {
+            listImage.add(new Image(0, pathToFolder + "/" + nomImage));
         }
         return listImage;
     }
@@ -28,23 +31,40 @@ public class Main {
     public static void main(String[] args) throws IOException {
 
         BufferedImage image = new BufferedImage(833, 1200, BufferedImage.TYPE_INT_ARGB);
-        ArrayList<Image> image_database = recup_image_database("./image_base");
-        String pathToImage = "./image_cible/cible2.jpg";
-        Image img = new Image(0, pathToImage);
+        List<Image> image_database = recup_image_database("./image_base");
+        String pathToImage = "./image_cible/cible1.jpg";
+        int id = 0;
+        Image img = new Image(id, pathToImage);
+
         double max_diff = 100000;
         String name = "";
         System.out.println(img);
-        for(Image i:image_database){
+        for (Image i : image_database) {
             System.out.println(i);
             double d = i.compare(img);
-            System.out.println("différence colorimétrique : "+ d);
+            System.out.println("différence colorimétrique : " + d);
             System.out.println("");
-            if(max_diff>d){
+            if (max_diff > d) {
                 max_diff = d;
                 name = i.getName();
             }
         }
-        System.out.println("la cible est "+name);
+        System.out.println("la cible est " + name);
+
+        System.out.println("///////////////////////////");
+
+        Map<Image, Double> mapImage = new HashMap<>();
+        image_database.forEach(image1 -> mapImage.put(image1, image1.compare(img)));
+
+        mapImage.entrySet()
+                .stream()
+                .max((entry1, entry2) -> {
+                    double d1 = entry1.getValue(), d2 = entry2.getValue();
+                    return Double.compare(d1, d2);
+//                        return d1 == d2 ? 0 : d1 > d2 ? 1 : -1;
+                })
+                .ifPresent(val ->System.out.println("Closest is : "+val.getKey().getName() + " Value : "+val.getValue()));
+
     }
 
 
