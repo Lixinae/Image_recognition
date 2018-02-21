@@ -30,29 +30,36 @@ public class Image {
         histo_color = calcul_histo_color();
     }
 
-    public double compare(Image image) {
+    /**
+     * Renvoie un double
+     * @param target Image avec laquelle comparer
+     * @return Un double qui est la difference colorimétrique -> Plus proche de 0 plus l'image target est proche de l'original
+     */
+    public double compare(Image target) {
 
-        int[][][] histoI = image.histo_color;
+        int[][][] histoI = target.histo_color;
         double coef0 = 0, coef1 = 0, coef2 = 0, coef3 = 0, coef4 = 0;
 
         for (int i = 0; i < histoI.length; i++) {
             for (int j = 0; j < histoI[0].length; j++) {
                 for (int k = 0; k < histoI[0][0].length; k++) {
+//                    double val = Math.pow(histo_color[i][j][k] - histoI[i][j][k], 2.0);
+                    double val = Math.abs(histo_color[i][j][k] - histoI[i][j][k]);
                     switch (k) {
                         case 0:
-                            coef0 += Math.pow(histo_color[i][j][k] - histoI[i][j][k], 2.0);
+                            coef0 += val;
                             break;
                         case 1:
-                            coef1 += Math.pow(histo_color[i][j][k] - histoI[i][j][k], 2.0);
+                            coef1 += val;
                             break;
                         case 2:
-                            coef2 += Math.pow(histo_color[i][j][k] - histoI[i][j][k], 2.0);
+                            coef2 += val;
                             break;
                         case 3:
-                            coef3 += Math.pow(histo_color[i][j][k] - histoI[i][j][k], 2.0);
+                            coef3 += val;
                             break;
                         case 4:
-                            coef4 += Math.pow(histo_color[i][j][k] - histoI[i][j][k], 2.0);
+                            coef4 += val;
                             break;
                     }
                 }
@@ -76,11 +83,6 @@ public class Image {
     }
 
     private String constructName(String path) {
-
-//        String[] s = path.split("/");
-//        String n = s[s.length - 1];
-//        n = n.substring(0,n.length()-4); // on retire .jpg ou .png
-//        n = n.replaceAll("[\\d]",""); // on retire les chiffres de fin
         Path p = Paths.get(path);
         String fileName = p.getFileName().toString();
         int idx = fileName.lastIndexOf('.');

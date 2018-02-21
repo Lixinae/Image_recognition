@@ -36,7 +36,7 @@ public class Main {
         int id = 0;
         Image img = new Image(id, pathToImage);
 
-        double max_diff = 100000;
+        double max_diff = 1000000;
         String name = "";
         System.out.println(img);
         for (Image i : image_database) {
@@ -58,10 +58,9 @@ public class Main {
 
         mapImage.entrySet()
                 .stream()
-                .max((entry1, entry2) -> {
+                .min((entry1, entry2) -> {
                     double d1 = entry1.getValue(), d2 = entry2.getValue();
                     return Double.compare(d1, d2);
-//                        return d1 == d2 ? 0 : d1 > d2 ? 1 : -1;
                 })
                 .ifPresent(val ->System.out.println("Closest is : "+val.getKey().getName() + " Value : "+val.getValue()));
 
