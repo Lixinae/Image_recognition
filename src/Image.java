@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Optional;
 
 public class Image {
@@ -84,7 +85,7 @@ public class Image {
     }
 
     private void SIFT(){
-        findKeyPoint();
+        keyPoint();
         RidBadKeyPoint();
         AssignOrientationKeyPoint();
         GenerateSiftFeature();
@@ -120,7 +121,7 @@ public class Image {
         return pixelsDiff;
     }
 
-    private void findKeyPoint() {
+    private void keyPoint() {
         //Log approx + ScaleSpace
         Pixel[][] pixelDiffOctave1 = diffImage(ScaleSpace(Math.sqrt(2)/2),ScaleSpace( Math.sqrt(2)));
         Pixel[][] pixelDiffOctave2 = diffImage(ScaleSpace( Math.sqrt(2)),ScaleSpace(Math.sqrt(2)*2));
@@ -128,11 +129,56 @@ public class Image {
         Pixel[][] pixelDiffOctave4 = diffImage(ScaleSpace(Math.sqrt(2)*4),ScaleSpace(Math.sqrt(2)*8));
         Pixel[][] pixelKeyPoint1 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
         Pixel[][] pixelKeyPoint2 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
-        for(int i=0;i<pixelDiffOctave2.length;i++){
-            for(int j=0;j<pixelDiffOctave2[0].length;j++){
-                
+
+        pixelKeyPoint1 = findKeyPoint(pixelDiffOctave1,pixelDiffOctave2,pixelDiffOctave3);
+        pixelKeyPoint2 = findKeyPoint(pixelDiffOctave2,pixelDiffOctave3,pixelDiffOctave4);
+
+    }
+
+    private Pixel[][] findKeyPoint(Pixel[][] pixelOct1, Pixel[][] pixelOct2, Pixel[][] pixelOct3) {
+        ArrayList<Pixel> list_point = new ArrayList<>();
+        Pixel[][] pixelKeyPoint = new Pixel[pixelOct2.length][pixelOct2[0].length];
+        for(int i=0;i<pixelOct2.length;i++){
+            for(int j=0;j<pixelOct2[0].length;j++){
+                list_point.addAll(listContour(pixelOct1,i,j));
+                list_point.addAll(listContour(pixelOct2,i,j));
+                list_point.addAll(listContour(pixelOct3,i,j));
+                final Comparator<Pixel> comp = (p1,p2)->Integer.compare(p1.getR()+p1.getG()+p1.getB()+p1.getA(),p2.getR()+p2.getG()+p2.getB()+p2.getA());
+                Pixel pmax = list_point.stream().max(comp).get();
+                pixelKeyPoint[i][j] = pmax;
             }
         }
+        return pixelKeyPoint;
+    }
+
+    private ArrayList<Pixel> listContour(Pixel[][] pixelOct1, int i, int j) {
+        ArrayList<Pixel> listP = new ArrayList<>();
+        listP.add(pixelOct1[i][j]);
+        if(i>0){
+            if( j>0){
+                listP.add(pixelOct1[i-1][j-1]);
+            }
+            if(j<pixelOct1[0].length){
+                listP.add(pixelOct1[i-1][j+1]);
+            }
+            listP.add(pixelOct1[i-1][j]);
+        }
+        if(i<pixelOct1.length){
+            if( j<pixelOct1[0].length){
+                listP.add(pixelOct1[i+1][j+1]);
+            }
+            if(j>0){
+                listP.add(pixelOct1[i+1][j-1]);
+            }
+            listP.add(pixelOct1[i+1][j]);
+        }
+        if(j>0){
+            listP.add(pixelOct1[i][j-1]);
+        }
+        if(j<pixelOct1[0].length){
+            listP.add(pixelOct1[i][j+1]);
+        }
+        return listP;
     }
 
     private void RidBadKeyPoint() {
