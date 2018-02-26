@@ -10,10 +10,10 @@ public class Pixel {
         this.a=a;
     }
     Pixel(Pixel cp){
-        this.r=cp.getR();
-        this.g=cp.getG();
-        this.b=cp.getB();
-        this.a=cp.getA();
+        this.r=cp.r;
+        this.g=cp.g;
+        this.b=cp.b;
+        this.a=cp.a;
     }
 
     @Override
@@ -44,4 +44,7 @@ public class Pixel {
         return r;
     }
 
+    public Pixel diff(Pixel pixel) {
+        return new Pixel(Math.abs(r-pixel.r),Math.abs(g-pixel.g),Math.abs(b-pixel.b),Math.abs(a-pixel.a));
+    }
 }

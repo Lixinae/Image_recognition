@@ -14,7 +14,6 @@ public class Image {
     private HSV[][] histoHSV;
     private int id_image;
     private Pixel[][] pixels2D; // Largeur / Hauteur pour les coordonnées
-    private Pixel[][] pixels2DFlou; // tableau de pixel de l'image flouté
     private String pathToImage;
     private String name;
     private int width;
@@ -85,16 +84,14 @@ public class Image {
     }
 
     private void SIFT(){
-        ScaleSpace(Math.sqrt(2)*2);
-        LoGApprox();
         findKeyPoint();
         RidBadKeyPoint();
         AssignOrientationKeyPoint();
         GenerateSiftFeature();
     }
 
-    private void ScaleSpace(double sigma) {
-        pixels2DFlou = new Pixel[pixels2D.length][pixels2D[0].length];
+    private Pixel[][] ScaleSpace(double sigma) {
+        Pixel[][] pixels2DFlou = new Pixel[pixels2D.length][pixels2D[0].length];
         for(int i=0;i<pixels2D.length;i++){
             for (int j=0;j<pixels2D[0].length;j++){
                 Double convol = convol(i,j,sigma);
@@ -105,18 +102,37 @@ public class Image {
                                                 );
             }
         }
+        return pixels2DFlou;
     }
 
     private double convol(int x,int y, double sigma) {
         return (1/2*Math.PI*sigma*sigma)*((Math.exp(-(x*x+y*y) / 2*sigma*sigma)));
     }
 
-    private void LoGApprox() {
-
+    //la meme taille des image
+    private Pixel[][] diffImage(Pixel[][] firstImage, Pixel[][] secondImage) {
+        Pixel[][] pixelsDiff = new Pixel[firstImage.length][firstImage[0].length];
+        for(int i=0;i<firstImage.length;i++){
+            for(int j=0;j<firstImage[0].length;j++){
+                pixelsDiff[i][j] = firstImage[i][j].diff(secondImage[i][j]);
+            }
+        }
+        return pixelsDiff;
     }
 
     private void findKeyPoint() {
-
+        //Log approx + ScaleSpace
+        Pixel[][] pixelDiffOctave1 = diffImage(ScaleSpace(Math.sqrt(2)/2),ScaleSpace( Math.sqrt(2)));
+        Pixel[][] pixelDiffOctave2 = diffImage(ScaleSpace( Math.sqrt(2)),ScaleSpace(Math.sqrt(2)*2));
+        Pixel[][] pixelDiffOctave3 = diffImage(ScaleSpace(Math.sqrt(2)*2),ScaleSpace(Math.sqrt(2)*4));
+        Pixel[][] pixelDiffOctave4 = diffImage(ScaleSpace(Math.sqrt(2)*4),ScaleSpace(Math.sqrt(2)*8));
+        Pixel[][] pixelKeyPoint1 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
+        Pixel[][] pixelKeyPoint2 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
+        for(int i=0;i<pixelDiffOctave2.length;i++){
+            for(int j=0;j<pixelDiffOctave2[0].length;j++){
+                
+            }
+        }
     }
 
     private void RidBadKeyPoint() {
