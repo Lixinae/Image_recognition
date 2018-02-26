@@ -36,26 +36,27 @@ public class Main {
         int id = 0;
         Image img = new Image(id, pathToImage);
 
-        double max_diff = 1000000;
-        String name = "";
-        System.out.println(img);
-        for (Image i : image_database) {
-            System.out.println(i);
-            double d = i.compare(img);
-            System.out.println("différence colorimétrique : " + d);
-            System.out.println("");
-            if (max_diff > d) {
-                max_diff = d;
-                name = i.getName();
-            }
-        }
-        System.out.println("la cible est " + name);
+//        double max_diff = 1000000;
+//        String name = "";
+//        System.out.println(img);
+//        for (Image i : image_database) {
+//            System.out.println(i);
+//            double d = i.compare(img);
+//            System.out.println("différence colorimétrique : " + d);
+//            System.out.println("");
+//            if (max_diff > d) {
+//                max_diff = d;
+//                name = i.getName();
+//            }
+//        }
+//        System.out.println("la cible est " + name);
 
         System.out.println("///////////////////////////");
 
         Map<Image, Double> mapImage = new HashMap<>();
         image_database.forEach(image1 -> mapImage.put(image1, image1.compare(img)));
 
+        // todo -> utiliser la moyenne plutot que 1 à 1
         mapImage.entrySet()
                 .stream()
                 .min((entry1, entry2) -> {
@@ -64,6 +65,7 @@ public class Main {
                 })
                 .ifPresent(val ->System.out.println("Closest is : "+val.getKey().getName() + " Value : "+val.getValue()));
 
+        img.writeImage("png","out.png");
     }
 
 

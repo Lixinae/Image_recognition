@@ -1,4 +1,5 @@
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
@@ -33,6 +34,7 @@ public class Image {
 
     /**
      * Renvoie un double
+     *
      * @param target Image avec laquelle comparer
      * @return Un double qui est la difference colorimétrique -> Plus proche de 0 plus l'image target est proche de l'original
      */
@@ -83,7 +85,7 @@ public class Image {
 //        return d;
     }
 
-    private void SIFT(){
+    private void SIFT() {
         findKeyPoint();
         RidBadKeyPoint();
         AssignOrientationKeyPoint();
@@ -92,28 +94,28 @@ public class Image {
 
     private Pixel[][] ScaleSpace(double sigma) {
         Pixel[][] pixels2DFlou = new Pixel[pixels2D.length][pixels2D[0].length];
-        for(int i=0;i<pixels2D.length;i++){
-            for (int j=0;j<pixels2D[0].length;j++){
-                Double convol = convol(i,j,sigma);
-                pixels2DFlou[i][j] = new Pixel(((Double)(pixels2D[i][j].getR()*convol)).intValue()
-                                                ,((Double)(pixels2D[i][j].getG()*convol)).intValue()
-                                                , ((Double)(pixels2D[i][j].getB()*convol)).intValue()
-                                                , ((Double)(pixels2D[i][j].getA()*convol)).intValue()
-                                                );
+        for (int i = 0; i < pixels2D.length; i++) {
+            for (int j = 0; j < pixels2D[0].length; j++) {
+                Double convol = convol(i, j, sigma);
+                pixels2DFlou[i][j] = new Pixel(((Double) (pixels2D[i][j].getR() * convol)).intValue()
+                        , ((Double) (pixels2D[i][j].getG() * convol)).intValue()
+                        , ((Double) (pixels2D[i][j].getB() * convol)).intValue()
+                        , ((Double) (pixels2D[i][j].getA() * convol)).intValue()
+                );
             }
         }
         return pixels2DFlou;
     }
 
-    private double convol(int x,int y, double sigma) {
-        return (1/2*Math.PI*sigma*sigma)*((Math.exp(-(x*x+y*y) / 2*sigma*sigma)));
+    private double convol(int x, int y, double sigma) {
+        return (1 / 2 * Math.PI * sigma * sigma) * ((Math.exp(-(x * x + y * y) / 2 * sigma * sigma)));
     }
 
     //la meme taille des image
     private Pixel[][] diffImage(Pixel[][] firstImage, Pixel[][] secondImage) {
         Pixel[][] pixelsDiff = new Pixel[firstImage.length][firstImage[0].length];
-        for(int i=0;i<firstImage.length;i++){
-            for(int j=0;j<firstImage[0].length;j++){
+        for (int i = 0; i < firstImage.length; i++) {
+            for (int j = 0; j < firstImage[0].length; j++) {
                 pixelsDiff[i][j] = firstImage[i][j].diff(secondImage[i][j]);
             }
         }
@@ -122,15 +124,15 @@ public class Image {
 
     private void findKeyPoint() {
         //Log approx + ScaleSpace
-        Pixel[][] pixelDiffOctave1 = diffImage(ScaleSpace(Math.sqrt(2)/2),ScaleSpace( Math.sqrt(2)));
-        Pixel[][] pixelDiffOctave2 = diffImage(ScaleSpace( Math.sqrt(2)),ScaleSpace(Math.sqrt(2)*2));
-        Pixel[][] pixelDiffOctave3 = diffImage(ScaleSpace(Math.sqrt(2)*2),ScaleSpace(Math.sqrt(2)*4));
-        Pixel[][] pixelDiffOctave4 = diffImage(ScaleSpace(Math.sqrt(2)*4),ScaleSpace(Math.sqrt(2)*8));
+        Pixel[][] pixelDiffOctave1 = diffImage(ScaleSpace(Math.sqrt(2) / 2), ScaleSpace(Math.sqrt(2)));
+        Pixel[][] pixelDiffOctave2 = diffImage(ScaleSpace(Math.sqrt(2)), ScaleSpace(Math.sqrt(2) * 2));
+        Pixel[][] pixelDiffOctave3 = diffImage(ScaleSpace(Math.sqrt(2) * 2), ScaleSpace(Math.sqrt(2) * 4));
+        Pixel[][] pixelDiffOctave4 = diffImage(ScaleSpace(Math.sqrt(2) * 4), ScaleSpace(Math.sqrt(2) * 8));
         Pixel[][] pixelKeyPoint1 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
         Pixel[][] pixelKeyPoint2 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
-        for(int i=0;i<pixelDiffOctave2.length;i++){
-            for(int j=0;j<pixelDiffOctave2[0].length;j++){
-                
+        for (int i = 0; i < pixelDiffOctave2.length; i++) {
+            for (int j = 0; j < pixelDiffOctave2[0].length; j++) {
+
             }
         }
     }
@@ -192,6 +194,24 @@ public class Image {
         }
         return Optional.empty();
 
+    }
+
+    public void writeImage(String type,String pathToImage) {
+        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for(int i=0;i<width;++i){
+            for(int j=0;j<height;++j){
+                int r = pixels2D[i][j].getR();
+                int g = pixels2D[i][j].getG();
+                int b = pixels2D[i][j].getB();
+                int color = new Color(r, g, b).getRGB();
+                bufferedImage.setRGB(i,j,color);
+            }
+        }
+        try {
+            ImageIO.write(bufferedImage, type, new File(pathToImage));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
