@@ -14,6 +14,7 @@ public class Image {
     private HSV[][] histoHSV;
     private int id_image;
     private Pixel[][] pixels2D; // Largeur / Hauteur pour les coordonnées
+    private Pixel[][] pixels2DFlou; // tableau de pixel de l'image flouté
     private String pathToImage;
     private String name;
     private int width;
@@ -28,6 +29,7 @@ public class Image {
         histoHSV = calcul_HSV();
         moyenne_rgb = calcul_moyenne_rgb();
         histo_color = calcul_histo_color();
+        SIFT();
     }
 
     /**
@@ -81,6 +83,54 @@ public class Image {
 //        d=r+g+b;
 //        return d;
     }
+
+    private void SIFT(){
+        ScaleSpace(Math.sqrt(2)*2);
+        LoGApprox();
+        findKeyPoint();
+        RidBadKeyPoint();
+        AssignOrientationKeyPoint();
+        GenerateSiftFeature();
+    }
+
+    private void ScaleSpace(double sigma) {
+        pixels2DFlou = new Pixel[pixels2D.length][pixels2D[0].length];
+        for(int i=0;i<pixels2D.length;i++){
+            for (int j=0;j<pixels2D[0].length;j++){
+                Double convol = convol(i,j,sigma);
+                pixels2DFlou[i][j] = new Pixel(((Double)(pixels2D[i][j].getR()*convol)).intValue()
+                                                ,((Double)(pixels2D[i][j].getG()*convol)).intValue()
+                                                , ((Double)(pixels2D[i][j].getB()*convol)).intValue()
+                                                , ((Double)(pixels2D[i][j].getA()*convol)).intValue()
+                                                );
+            }
+        }
+    }
+
+    private double convol(int x,int y, double sigma) {
+        return (1/2*Math.PI*sigma*sigma)*((Math.exp(-(x*x+y*y) / 2*sigma*sigma)));
+    }
+
+    private void LoGApprox() {
+
+    }
+
+    private void findKeyPoint() {
+
+    }
+
+    private void RidBadKeyPoint() {
+
+    }
+
+    private void AssignOrientationKeyPoint() {
+
+    }
+
+    private void GenerateSiftFeature() {
+
+    }
+
 
     private String constructName(String path) {
         Path p = Paths.get(path);

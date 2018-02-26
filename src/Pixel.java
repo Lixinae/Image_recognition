@@ -9,6 +9,12 @@ public class Pixel {
         this.b=b;
         this.a=a;
     }
+    Pixel(Pixel cp){
+        this.r=cp.getR();
+        this.g=cp.getG();
+        this.b=cp.getB();
+        this.a=cp.getA();
+    }
 
     @Override
     public String toString() {
@@ -19,6 +25,8 @@ public class Pixel {
                 ", a=" + a +
                 '}';
     }
+
+
 
     public int getA() {
         return a;
@@ -35,4 +43,5 @@ public class Pixel {
     public int getR() {
         return r;
     }
+
 }
