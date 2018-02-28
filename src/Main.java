@@ -20,8 +20,10 @@ public class Main {
         }
         ArrayList<Image> listImage = new ArrayList<>();
         for (String nomImage : listNomImage) {
+            System.out.println(nomImage);
             listImage.add(new Image(0, pathToFolder + "/" + nomImage));
         }
+        System.out.println("test");
         return listImage;
     }
 
@@ -65,7 +67,6 @@ public class Main {
                 })
                 .ifPresent(val ->System.out.println("Closest is : "+val.getKey().getName() + " Value : "+val.getValue()));
 
-        img.writeImage("png","out.png");
     }
 
 

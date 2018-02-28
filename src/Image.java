@@ -23,6 +23,7 @@ public class Image {
     private int[][][] histo_color;
 
     public Image(int id_image, String pathToImage) {
+        System.out.println("im");
         this.id_image = id_image;
         this.pathToImage = pathToImage;
         this.name = constructName(pathToImage);
@@ -87,6 +88,7 @@ public class Image {
     }
 
     private void SIFT(){
+        System.out.println("sift");
         keyPoint();
         RidBadKeyPoint();
         AssignOrientationKeyPoint();
@@ -94,29 +96,47 @@ public class Image {
     }
 
     private Pixel[][] ScaleSpace(double sigma) {
+        //TODO chercher pourquoi image noir
         Pixel[][] pixels2DFlou = new Pixel[pixels2D.length][pixels2D[0].length];
+        Double convol=0.0;
+        double[][] filtreG = new double[pixels2D.length][pixels2D[0].length];
+        for (int i = -pixels2D.length/2; i < pixels2D.length/2; i++) {
+            for (int j = -pixels2D[0].length/2; j < pixels2D[0].length/2; j++) {
+                filtreG[i+pixels2D.length/2][j+pixels2D[0].length/2] = convol(i,j,sigma);
+                convol += convol(i, j, sigma);
+            }
+        }
+        for (int i = -pixels2D.length/2; i < pixels2D.length/2; i++) {
+            for (int j = -pixels2D[0].length/2; j < pixels2D[0].length/2; j++) {
+                filtreG[i+pixels2D.length/2][j+pixels2D[0].length/2]  /= convol;
+            }
+        }
+
         for (int i = 0; i < pixels2D.length; i++) {
-            for (int j = 0; j < pixels2D[0].length; j++) {
-                Double convol = convol(i, j, sigma);
-                pixels2DFlou[i][j] = new Pixel(((Double) (pixels2D[i][j].getR() * convol)).intValue()
-                        , ((Double) (pixels2D[i][j].getG() * convol)).intValue()
-                        , ((Double) (pixels2D[i][j].getB() * convol)).intValue()
-                        , ((Double) (pixels2D[i][j].getA() * convol)).intValue()
-                );
+            for (int j = 0; j < filtreG[0].length; j++) {
+                for(int k = 0; k < pixels2D[0].length; k++){
+                    pixels2DFlou[i][j] = new Pixel(((Double) (pixels2D[i][k].getR() * filtreG[k][j])).intValue()
+                            , ((Double) (pixels2D[i][k].getG() * filtreG[k][j])).intValue()
+                            , ((Double) (pixels2D[i][k].getB() * filtreG[k][j])).intValue()
+                            , ((Double) (pixels2D[i][k].getA() * filtreG[k][j])).intValue()
+                    );
+                }
             }
         }
         return pixels2DFlou;
     }
 
     private double convol(int x, int y, double sigma) {
-        return (1 / 2 * Math.PI * sigma * sigma) * ((Math.exp(-(x * x + y * y) / 2 * sigma * sigma)));
+        return ((Math.exp(-(x * x + y * y) /( 2 * sigma * sigma))))/(2 * Math.PI * sigma * sigma);
     }
 
     //la meme taille des image
     private Pixel[][] diffImage(Pixel[][] firstImage, Pixel[][] secondImage) {
+        writeImage(firstImage,"png",name+"_scale."+"png");
         Pixel[][] pixelsDiff = new Pixel[firstImage.length][firstImage[0].length];
         for (int i = 0; i < firstImage.length; i++) {
             for (int j = 0; j < firstImage[0].length; j++) {
+//                System.out.println(firstImage[i][j]+" " +secondImage[i][j]);
                 pixelsDiff[i][j] = firstImage[i][j].diff(secondImage[i][j]);
             }
         }
@@ -129,11 +149,18 @@ public class Image {
         Pixel[][] pixelDiffOctave2 = diffImage(ScaleSpace(Math.sqrt(2)), ScaleSpace(Math.sqrt(2) * 2));
         Pixel[][] pixelDiffOctave3 = diffImage(ScaleSpace(Math.sqrt(2) * 2), ScaleSpace(Math.sqrt(2) * 4));
         Pixel[][] pixelDiffOctave4 = diffImage(ScaleSpace(Math.sqrt(2) * 4), ScaleSpace(Math.sqrt(2) * 8));
+        System.out.println("write");
+        writeImage(pixelDiffOctave1,"png",name+"out1.png");
+        writeImage(pixelDiffOctave2,"png",name+"out2.png");
+        writeImage(pixelDiffOctave3,"png",name+"out3.png");
+        writeImage(pixelDiffOctave4,"png",name+"out4.png");
+        System.out.println("finwrite");
         Pixel[][] pixelKeyPoint1 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
         Pixel[][] pixelKeyPoint2 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
 
-        pixelKeyPoint1 = findKeyPoint(pixelDiffOctave1,pixelDiffOctave2,pixelDiffOctave3);
-        pixelKeyPoint2 = findKeyPoint(pixelDiffOctave2,pixelDiffOctave3,pixelDiffOctave4);
+        //pixelKeyPoint1 = findKeyPoint(pixelDiffOctave1,pixelDiffOctave2,pixelDiffOctave3);
+        //pixelKeyPoint2 = findKeyPoint(pixelDiffOctave2,pixelDiffOctave3,pixelDiffOctave4);
+        System.out.println("fin");
 
     }
 
@@ -160,13 +187,13 @@ public class Image {
             if( j>0){
                 listP.add(pixelOct1[i-1][j-1]);
             }
-            if(j<pixelOct1[0].length){
+            if(j<pixelOct1[0].length-1){
                 listP.add(pixelOct1[i-1][j+1]);
             }
             listP.add(pixelOct1[i-1][j]);
         }
-        if(i<pixelOct1.length){
-            if( j<pixelOct1[0].length){
+        if(i<pixelOct1.length-1){
+            if( j<pixelOct1[0].length-1){
                 listP.add(pixelOct1[i+1][j+1]);
             }
             if(j>0){
@@ -177,7 +204,7 @@ public class Image {
         if(j>0){
             listP.add(pixelOct1[i][j-1]);
         }
-        if(j<pixelOct1[0].length){
+        if(j<pixelOct1[0].length-1){
             listP.add(pixelOct1[i][j+1]);
         }
         return listP;
@@ -242,13 +269,13 @@ public class Image {
 
     }
 
-    public void writeImage(String type,String pathToImage) {
-        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        for(int i=0;i<width;++i){
-            for(int j=0;j<height;++j){
-                int r = pixels2D[i][j].getR();
-                int g = pixels2D[i][j].getG();
-                int b = pixels2D[i][j].getB();
+    public void writeImage(Pixel[][] p,String type,String pathToImage) {
+        BufferedImage bufferedImage = new BufferedImage(p.length,p[0].length, BufferedImage.TYPE_INT_RGB);
+        for(int i=0;i<p.length;++i){
+            for(int j=0;j<p[0].length;++j){
+                int r = p[i][j].getR();
+                int g = p[i][j].getG();
+                int b = p[i][j].getB();
                 int color = new Color(r, g, b).getRGB();
                 bufferedImage.setRGB(i,j,color);
             }

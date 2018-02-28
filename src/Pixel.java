@@ -47,4 +47,17 @@ public class Pixel {
     public Pixel diff(Pixel pixel) {
         return new Pixel(Math.abs(r-pixel.r),Math.abs(g-pixel.g),Math.abs(b-pixel.b),Math.abs(a-pixel.a));
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o==null){
+            return false;
+        }
+        if(getClass() != o.getClass()){
+            return false;
+        }
+        Pixel p = (Pixel)o;
+
+        return p.r==r && p.g==g && p.b==b && p.a==a;
+    }
 }
