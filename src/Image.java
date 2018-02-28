@@ -134,6 +134,7 @@ public class Image {
     private Pixel[][] diffImage(Pixel[][] firstImage, Pixel[][] secondImage) {
         writeImage(firstImage,"png",name+"_scale."+"png");
         Pixel[][] pixelsDiff = new Pixel[firstImage.length][firstImage[0].length];
+        System.out.println("");
         for (int i = 0; i < firstImage.length; i++) {
             for (int j = 0; j < firstImage[0].length; j++) {
 //                System.out.println(firstImage[i][j]+" " +secondImage[i][j]);
