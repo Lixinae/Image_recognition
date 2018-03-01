@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class Image {
     private Pixel moyenne_rgb;
@@ -99,6 +100,23 @@ public class Image {
     private Pixel[][] ScaleSpace(double sigma) {
         //TODO chercher pourquoi image noir
         Pixel[][] pixels2DFlou = new Pixel[pixels2D.length][pixels2D[0].length];
+        System.out.println("sigma" + sigma);
+        double[][] filter = new double[3][3];
+        // creation du filtre
+        for (int i = 0; i < filter.length; i++) {
+            for (int j = 0; j < filter[0].length; j++) {
+                filter[i][j] = convol(i, j, sigma);
+                System.out.println(filter[i][j]);
+            }
+        }
+
+
+//        for (int i = 0; i < pixels2D.length; i++) {
+//            for (int j = 0; j < pixels2D[0].length; j++) {
+//                pixels2DFlou[i][j] = applyFilterToPixel(i, j, filter);
+//            }
+//        }
+
 
         for (int i = 0; i < pixels2D.length; i++) {
             for (int j = 0; j < pixels2D[0].length; j++) {
@@ -139,35 +157,61 @@ public class Image {
                         minEntry = entry;
                     }
                 }
-                pixels2DFlou[i][j] = maxEntry.getKey();
-                if (i > 0) {
+                if (maxEntry != null) {
+                    pixels2DFlou[i][j] = maxEntry.getKey();
+                }
+
+                if (minEntry != null) {
+                    if (i > 0) {
+                        if (j > 0) {
+                            pixels2DFlou[i - 1][j - 1] = minEntry.getKey();
+                        }
+                        if (j < pixels2D[0].length - 1) {
+                            pixels2DFlou[i - 1][j + 1] = minEntry.getKey();
+                        }
+                        pixels2DFlou[i - 1][j] = minEntry.getKey();
+                    }
+                    if (i < pixels2D.length - 1) {
+                        if (j < pixels2D[0].length - 1) {
+                            pixels2DFlou[i + 1][j + 1] = minEntry.getKey();
+                        }
+                        if (j > 0) {
+                            pixels2DFlou[i + 1][j - 1] = minEntry.getKey();
+                        }
+                        pixels2DFlou[i + 1][j] = minEntry.getKey();
+                    }
                     if (j > 0) {
-                        pixels2DFlou[i - 1][j - 1] = minEntry.getKey();
+                        pixels2DFlou[i][j - 1] = minEntry.getKey();
                     }
                     if (j < pixels2D[0].length - 1) {
-                        pixels2DFlou[i - 1][j + 1] = minEntry.getKey();
+                        pixels2DFlou[i][j + 1] = minEntry.getKey();
                     }
-                    pixels2DFlou[i - 1][j] = minEntry.getKey();
-                }
-                if (i < pixels2D.length - 1) {
-                    if (j < pixels2D[0].length - 1) {
-                        pixels2DFlou[i + 1][j + 1] = minEntry.getKey();
-                    }
-                    if (j > 0) {
-                        pixels2DFlou[i + 1][j - 1] = minEntry.getKey();
-                    }
-                    pixels2DFlou[i + 1][j] = minEntry.getKey();
-                }
-                if (j > 0) {
-                    pixels2DFlou[i][j - 1] = minEntry.getKey();
-                }
-                if (j < pixels2D[0].length - 1) {
-                    pixels2DFlou[i][j + 1] = minEntry.getKey();
                 }
             }
         }
         return pixels2DFlou;
     }
+
+//    private Pixel applyFilterToPixel(int i, int j, double[][] filter) {
+//        double sum = 0;
+//
+//
+//        // Centre du kernel en I J
+//        // Si k = 1 et l = 1 -> centre
+//        //for (int k = 0; i < filter.length; k++) {
+//        //    for (int l = 0; j < filter[0].length; l++) {
+//        Pixel pixel = pixels2D[i][j];
+//        int r = pixel.getR();
+//        int g = pixel.getG();
+//        int b = pixel.getB();
+//        int color = new Color(r, g, b).getRGB();
+//        sum += color * filter[0][0]; // Fonctionne par le filtre
+//        //    }
+//        //}
+//        Color color1 = new Color(sum);
+//        Pixel out = new Pixel(pixel.getA());
+//        return out;
+//    }
 
 
     private double convol(int x, int y, double sigma) {
@@ -203,8 +247,8 @@ public class Image {
         Pixel[][] pixelKeyPoint1 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
         Pixel[][] pixelKeyPoint2 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
 
-        pixelKeyPoint1 = findKeyPoint(pixelDiffOctave1, pixelDiffOctave2, pixelDiffOctave3);
-        pixelKeyPoint2 = findKeyPoint(pixelDiffOctave2, pixelDiffOctave3, pixelDiffOctave4);
+        //pixelKeyPoint1 = findKeyPoint(pixelDiffOctave1, pixelDiffOctave2, pixelDiffOctave3);
+        //pixelKeyPoint2 = findKeyPoint(pixelDiffOctave2, pixelDiffOctave3, pixelDiffOctave4);
         System.out.println("fin");
 
     }
@@ -215,20 +259,22 @@ public class Image {
         final Comparator<Pixel> comp = Comparator.comparingInt(p -> p.getR() + p.getG() + p.getB() + p.getA());
         Pixel pmax;
         for (int i = 0; i < pixelOct2.length; i++) {
-            System.out.println("" + i + " ");
             for (int j = 0; j < pixelOct2[0].length; j++) {
                 list_point.addAll(listContour(pixelOct1, i, j));
                 list_point.addAll(listContour(pixelOct2, i, j));
                 list_point.addAll(listContour(pixelOct3, i, j));
-                pmax = list_point.stream().max(comp).get();
-                pixelKeyPoint[i][j] = pmax;
+                Optional<Pixel> optPmax = list_point.stream().max(comp);
+                if (optPmax.isPresent()) {
+                    pmax = optPmax.get();
+                    pixelKeyPoint[i][j] = pmax;
+                }
             }
         }
         return pixelKeyPoint;
     }
 
     private ArrayList<Pixel> listContour(Pixel[][] pixelOct1, int i, int j) {
-        ArrayList<Pixel> listP = new ArrayList<>();
+        final ArrayList<Pixel> listP = new ArrayList<>();
         listP.add(pixelOct1[i][j]);
         if (i > 0) {
             if (j > 0) {
