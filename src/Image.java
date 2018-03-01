@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Optional;
 
 public class Image {
@@ -87,7 +88,7 @@ public class Image {
 //        return d;
     }
 
-    private void SIFT(){
+    private void SIFT() {
         System.out.println("sift");
         keyPoint();
         RidBadKeyPoint();
@@ -98,43 +99,84 @@ public class Image {
     private Pixel[][] ScaleSpace(double sigma) {
         //TODO chercher pourquoi image noir
         Pixel[][] pixels2DFlou = new Pixel[pixels2D.length][pixels2D[0].length];
-        Double convol=0.0;
-        double[][] filtreG = new double[pixels2D.length][pixels2D[0].length];
-        for (int i = -pixels2D.length/2; i < pixels2D.length/2; i++) {
-            for (int j = -pixels2D[0].length/2; j < pixels2D[0].length/2; j++) {
-                filtreG[i+pixels2D.length/2][j+pixels2D[0].length/2] = convol(i,j,sigma);
-                convol += convol(i, j, sigma);
-            }
-        }
-        for (int i = -pixels2D.length/2; i < pixels2D.length/2; i++) {
-            for (int j = -pixels2D[0].length/2; j < pixels2D[0].length/2; j++) {
-                filtreG[i+pixels2D.length/2][j+pixels2D[0].length/2]  /= convol;
-            }
-        }
 
         for (int i = 0; i < pixels2D.length; i++) {
-            for (int j = 0; j < filtreG[0].length; j++) {
-                for(int k = 0; k < pixels2D[0].length; k++){
-                    pixels2DFlou[i][j] = new Pixel(((Double) (pixels2D[i][k].getR() * filtreG[k][j])).intValue()
-                            , ((Double) (pixels2D[i][k].getG() * filtreG[k][j])).intValue()
-                            , ((Double) (pixels2D[i][k].getB() * filtreG[k][j])).intValue()
-                            , ((Double) (pixels2D[i][k].getA() * filtreG[k][j])).intValue()
-                    );
+            for (int j = 0; j < pixels2D[0].length; j++) {
+                HashMap<Pixel, Double> map_pixel = new HashMap<>();
+                map_pixel.put(pixels2D[i][j], convol(i, j, sigma));
+                if (i > 0) {
+                    if (j > 0) {
+                        map_pixel.put(pixels2D[i - 1][j - 1], convol(i - 1, j - 1, sigma));
+                    }
+                    if (j < pixels2D[0].length - 1) {
+                        map_pixel.put(pixels2D[i - 1][j + 1], convol(i - 1, j + 1, sigma));
+                    }
+                    map_pixel.put(pixels2D[i - 1][j], convol(i - 1, j, sigma));
+                }
+                if (i < pixels2D.length - 1) {
+                    if (j < pixels2D[0].length - 1) {
+                        map_pixel.put(pixels2D[i + 1][j + 1], convol(i + 1, j + 1, sigma));
+                    }
+                    if (j > 0) {
+                        map_pixel.put(pixels2D[i + 1][j - 1], convol(i + 1, j - 1, sigma));
+                    }
+                    map_pixel.put(pixels2D[i + 1][j], convol(i + 1, j, sigma));
+                }
+                if (j > 0) {
+                    map_pixel.put(pixels2D[i][j - 1], convol(i, j - 1, sigma));
+                }
+                if (j < pixels2D[0].length - 1) {
+                    map_pixel.put(pixels2D[i][j + 1], convol(i, j + 1, sigma));
+                }
+                HashMap.Entry<Pixel, Double> maxEntry = null;
+                HashMap.Entry<Pixel, Double> minEntry = null;
+
+                for (HashMap.Entry<Pixel, Double> entry : map_pixel.entrySet()) {
+                    if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0) {
+                        maxEntry = entry;
+                    }
+                    if (minEntry == null || entry.getValue().compareTo(minEntry.getValue()) > 0) {
+                        minEntry = entry;
+                    }
+                }
+                pixels2DFlou[i][j] = maxEntry.getKey();
+                if (i > 0) {
+                    if (j > 0) {
+                        pixels2DFlou[i - 1][j - 1] = minEntry.getKey();
+                    }
+                    if (j < pixels2D[0].length - 1) {
+                        pixels2DFlou[i - 1][j + 1] = minEntry.getKey();
+                    }
+                    pixels2DFlou[i - 1][j] = minEntry.getKey();
+                }
+                if (i < pixels2D.length - 1) {
+                    if (j < pixels2D[0].length - 1) {
+                        pixels2DFlou[i + 1][j + 1] = minEntry.getKey();
+                    }
+                    if (j > 0) {
+                        pixels2DFlou[i + 1][j - 1] = minEntry.getKey();
+                    }
+                    pixels2DFlou[i + 1][j] = minEntry.getKey();
+                }
+                if (j > 0) {
+                    pixels2DFlou[i][j - 1] = minEntry.getKey();
+                }
+                if (j < pixels2D[0].length - 1) {
+                    pixels2DFlou[i][j + 1] = minEntry.getKey();
                 }
             }
         }
         return pixels2DFlou;
     }
 
+
     private double convol(int x, int y, double sigma) {
-        return ((Math.exp(-(x * x + y * y) /( 2 * sigma * sigma))))/(2 * Math.PI * sigma * sigma);
+        return ((Math.exp(-(x * x + y * y) / (2 * sigma * sigma)))) / (2 * Math.PI * sigma * sigma);
     }
 
     //la meme taille des image
     private Pixel[][] diffImage(Pixel[][] firstImage, Pixel[][] secondImage) {
-        writeImage(firstImage,"png",name+"_scale."+"png");
         Pixel[][] pixelsDiff = new Pixel[firstImage.length][firstImage[0].length];
-        System.out.println("");
         for (int i = 0; i < firstImage.length; i++) {
             for (int j = 0; j < firstImage[0].length; j++) {
 //                System.out.println(firstImage[i][j]+" " +secondImage[i][j]);
@@ -145,22 +187,24 @@ public class Image {
     }
 
     private void keyPoint() {
+
         //Log approx + ScaleSpace
         Pixel[][] pixelDiffOctave1 = diffImage(ScaleSpace(Math.sqrt(2) / 2), ScaleSpace(Math.sqrt(2)));
         Pixel[][] pixelDiffOctave2 = diffImage(ScaleSpace(Math.sqrt(2)), ScaleSpace(Math.sqrt(2) * 2));
         Pixel[][] pixelDiffOctave3 = diffImage(ScaleSpace(Math.sqrt(2) * 2), ScaleSpace(Math.sqrt(2) * 4));
         Pixel[][] pixelDiffOctave4 = diffImage(ScaleSpace(Math.sqrt(2) * 4), ScaleSpace(Math.sqrt(2) * 8));
+
         System.out.println("write");
-        writeImage(pixelDiffOctave1,"png",name+"out1.png");
-        writeImage(pixelDiffOctave2,"png",name+"out2.png");
-        writeImage(pixelDiffOctave3,"png",name+"out3.png");
-        writeImage(pixelDiffOctave4,"png",name+"out4.png");
+        writeImage(pixelDiffOctave1, "png", name + "out1.png");
+        writeImage(pixelDiffOctave2, "png", name + "out2.png");
+        writeImage(pixelDiffOctave3, "png", name + "out3.png");
+        writeImage(pixelDiffOctave4, "png", name + "out4.png");
         System.out.println("finwrite");
         Pixel[][] pixelKeyPoint1 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
         Pixel[][] pixelKeyPoint2 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
 
-        //pixelKeyPoint1 = findKeyPoint(pixelDiffOctave1,pixelDiffOctave2,pixelDiffOctave3);
-        //pixelKeyPoint2 = findKeyPoint(pixelDiffOctave2,pixelDiffOctave3,pixelDiffOctave4);
+        pixelKeyPoint1 = findKeyPoint(pixelDiffOctave1, pixelDiffOctave2, pixelDiffOctave3);
+        pixelKeyPoint2 = findKeyPoint(pixelDiffOctave2, pixelDiffOctave3, pixelDiffOctave4);
         System.out.println("fin");
 
     }
@@ -168,13 +212,15 @@ public class Image {
     private Pixel[][] findKeyPoint(Pixel[][] pixelOct1, Pixel[][] pixelOct2, Pixel[][] pixelOct3) {
         ArrayList<Pixel> list_point = new ArrayList<>();
         Pixel[][] pixelKeyPoint = new Pixel[pixelOct2.length][pixelOct2[0].length];
-        for(int i=0;i<pixelOct2.length;i++){
-            for(int j=0;j<pixelOct2[0].length;j++){
-                list_point.addAll(listContour(pixelOct1,i,j));
-                list_point.addAll(listContour(pixelOct2,i,j));
-                list_point.addAll(listContour(pixelOct3,i,j));
-                final Comparator<Pixel> comp = (p1,p2)->Integer.compare(p1.getR()+p1.getG()+p1.getB()+p1.getA(),p2.getR()+p2.getG()+p2.getB()+p2.getA());
-                Pixel pmax = list_point.stream().max(comp).get();
+        final Comparator<Pixel> comp = Comparator.comparingInt(p -> p.getR() + p.getG() + p.getB() + p.getA());
+        Pixel pmax;
+        for (int i = 0; i < pixelOct2.length; i++) {
+            System.out.println("" + i + " ");
+            for (int j = 0; j < pixelOct2[0].length; j++) {
+                list_point.addAll(listContour(pixelOct1, i, j));
+                list_point.addAll(listContour(pixelOct2, i, j));
+                list_point.addAll(listContour(pixelOct3, i, j));
+                pmax = list_point.stream().max(comp).get();
                 pixelKeyPoint[i][j] = pmax;
             }
         }
@@ -184,29 +230,29 @@ public class Image {
     private ArrayList<Pixel> listContour(Pixel[][] pixelOct1, int i, int j) {
         ArrayList<Pixel> listP = new ArrayList<>();
         listP.add(pixelOct1[i][j]);
-        if(i>0){
-            if( j>0){
-                listP.add(pixelOct1[i-1][j-1]);
+        if (i > 0) {
+            if (j > 0) {
+                listP.add(pixelOct1[i - 1][j - 1]);
             }
-            if(j<pixelOct1[0].length-1){
-                listP.add(pixelOct1[i-1][j+1]);
+            if (j < pixelOct1[0].length - 1) {
+                listP.add(pixelOct1[i - 1][j + 1]);
             }
-            listP.add(pixelOct1[i-1][j]);
+            listP.add(pixelOct1[i - 1][j]);
         }
-        if(i<pixelOct1.length-1){
-            if( j<pixelOct1[0].length-1){
-                listP.add(pixelOct1[i+1][j+1]);
+        if (i < pixelOct1.length - 1) {
+            if (j < pixelOct1[0].length - 1) {
+                listP.add(pixelOct1[i + 1][j + 1]);
             }
-            if(j>0){
-                listP.add(pixelOct1[i+1][j-1]);
+            if (j > 0) {
+                listP.add(pixelOct1[i + 1][j - 1]);
             }
-            listP.add(pixelOct1[i+1][j]);
+            listP.add(pixelOct1[i + 1][j]);
         }
-        if(j>0){
-            listP.add(pixelOct1[i][j-1]);
+        if (j > 0) {
+            listP.add(pixelOct1[i][j - 1]);
         }
-        if(j<pixelOct1[0].length-1){
-            listP.add(pixelOct1[i][j+1]);
+        if (j < pixelOct1[0].length - 1) {
+            listP.add(pixelOct1[i][j + 1]);
         }
         return listP;
     }
@@ -270,15 +316,15 @@ public class Image {
 
     }
 
-    public void writeImage(Pixel[][] p,String type,String pathToImage) {
-        BufferedImage bufferedImage = new BufferedImage(p.length,p[0].length, BufferedImage.TYPE_INT_RGB);
-        for(int i=0;i<p.length;++i){
-            for(int j=0;j<p[0].length;++j){
+    public void writeImage(Pixel[][] p, String type, String pathToImage) {
+        BufferedImage bufferedImage = new BufferedImage(p.length, p[0].length, BufferedImage.TYPE_INT_RGB);
+        for (int i = 0; i < p.length; ++i) {
+            for (int j = 0; j < p[0].length; ++j) {
                 int r = p[i][j].getR();
                 int g = p[i][j].getG();
                 int b = p[i][j].getB();
                 int color = new Color(r, g, b).getRGB();
-                bufferedImage.setRGB(i,j,color);
+                bufferedImage.setRGB(i, j, color);
             }
         }
         try {
