@@ -60,4 +60,5 @@ public class Pixel {
 
         return p.r==r && p.g==g && p.b==b && p.a==a;
     }
+
 }
