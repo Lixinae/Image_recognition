@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class Image {
     private Pixel moyenne_rgb;
@@ -98,6 +99,23 @@ public class Image {
 
     private Pixel[][] ScaleSpace(double sigma) {
         Pixel[][] pixels2DFlou = new Pixel[pixels2D.length][pixels2D[0].length];
+        System.out.println("sigma" + sigma);
+        double[][] filter = new double[3][3];
+        // creation du filtre
+        for (int i = 0; i < filter.length; i++) {
+            for (int j = 0; j < filter[0].length; j++) {
+                filter[i][j] = convol(i, j, sigma);
+                System.out.println(filter[i][j]);
+            }
+        }
+
+
+//        for (int i = 0; i < pixels2D.length; i++) {
+//            for (int j = 0; j < pixels2D[0].length; j++) {
+//                pixels2DFlou[i][j] = applyFilterToPixel(i, j, filter);
+//            }
+//        }
+
 
         for (int i = 0; i < pixels2D.length; i++) {
             for (int j = 0; j < pixels2D[0].length; j++) {
@@ -141,6 +159,27 @@ public class Image {
     private Pixel[][] ScaleSpace2(double sigma) {
         return null;
     }
+
+//    private Pixel applyFilterToPixel(int i, int j, double[][] filter) {
+//        double sum = 0;
+//
+//
+//        // Centre du kernel en I J
+//        // Si k = 1 et l = 1 -> centre
+//        //for (int k = 0; i < filter.length; k++) {
+//        //    for (int l = 0; j < filter[0].length; l++) {
+//        Pixel pixel = pixels2D[i][j];
+//        int r = pixel.getR();
+//        int g = pixel.getG();
+//        int b = pixel.getB();
+//        int color = new Color(r, g, b).getRGB();
+//        sum += color * filter[0][0]; // Fonctionne par le filtre
+//        //    }
+//        //}
+//        Color color1 = new Color(sum);
+//        Pixel out = new Pixel(pixel.getA());
+//        return out;
+//    }
 
 
     private double convol(int x, int y, double sigma) {
