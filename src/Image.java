@@ -97,37 +97,20 @@ public class Image {
     }
 
     private Pixel[][] ScaleSpace(double sigma) {
-        //TODO chercher pourquoi image noir
         Pixel[][] pixels2DFlou = new Pixel[pixels2D.length][pixels2D[0].length];
 
         for (int i = 0; i < pixels2D.length; i++) {
             for (int j = 0; j < pixels2D[0].length; j++) {
                 HashMap<Pixel, Double> map_pixel = new HashMap<>();
+                for (int k = i - 1; k < i + 2; k++) {
+                    for (int l = j - 1; l < j + 2; l++) {
+                        if (noOutOfBound(k, l, pixels2D.length, pixels2D[0].length)) {
+                            map_pixel.put(pixels2D[k][l], convol(k, l, sigma));
+                        }
+                    }
+                }
                 map_pixel.put(pixels2D[i][j], convol(i, j, sigma));
-                if (i > 0) {
-                    if (j > 0) {
-                        map_pixel.put(pixels2D[i - 1][j - 1], convol(i - 1, j - 1, sigma));
-                    }
-                    if (j < pixels2D[0].length - 1) {
-                        map_pixel.put(pixels2D[i - 1][j + 1], convol(i - 1, j + 1, sigma));
-                    }
-                    map_pixel.put(pixels2D[i - 1][j], convol(i - 1, j, sigma));
-                }
-                if (i < pixels2D.length - 1) {
-                    if (j < pixels2D[0].length - 1) {
-                        map_pixel.put(pixels2D[i + 1][j + 1], convol(i + 1, j + 1, sigma));
-                    }
-                    if (j > 0) {
-                        map_pixel.put(pixels2D[i + 1][j - 1], convol(i + 1, j - 1, sigma));
-                    }
-                    map_pixel.put(pixels2D[i + 1][j], convol(i + 1, j, sigma));
-                }
-                if (j > 0) {
-                    map_pixel.put(pixels2D[i][j - 1], convol(i, j - 1, sigma));
-                }
-                if (j < pixels2D[0].length - 1) {
-                    map_pixel.put(pixels2D[i][j + 1], convol(i, j + 1, sigma));
-                }
+
                 HashMap.Entry<Pixel, Double> maxEntry = null;
                 HashMap.Entry<Pixel, Double> minEntry = null;
 
@@ -139,34 +122,24 @@ public class Image {
                         minEntry = entry;
                     }
                 }
+
+                Pixel valMin = minEntry.getKey();
+                for (int k = i - 1; k < i + 2; k++) {
+                    for (int l = j - 1; l < j + 2; l++) {
+                        if (noOutOfBound(k, l, pixels2D.length, pixels2D[0].length)) {
+                            pixels2DFlou[k][l] = valMin;
+                        }
+                    }
+                }
                 pixels2DFlou[i][j] = maxEntry.getKey();
-                if (i > 0) {
-                    if (j > 0) {
-                        pixels2DFlou[i - 1][j - 1] = minEntry.getKey();
-                    }
-                    if (j < pixels2D[0].length - 1) {
-                        pixels2DFlou[i - 1][j + 1] = minEntry.getKey();
-                    }
-                    pixels2DFlou[i - 1][j] = minEntry.getKey();
-                }
-                if (i < pixels2D.length - 1) {
-                    if (j < pixels2D[0].length - 1) {
-                        pixels2DFlou[i + 1][j + 1] = minEntry.getKey();
-                    }
-                    if (j > 0) {
-                        pixels2DFlou[i + 1][j - 1] = minEntry.getKey();
-                    }
-                    pixels2DFlou[i + 1][j] = minEntry.getKey();
-                }
-                if (j > 0) {
-                    pixels2DFlou[i][j - 1] = minEntry.getKey();
-                }
-                if (j < pixels2D[0].length - 1) {
-                    pixels2DFlou[i][j + 1] = minEntry.getKey();
-                }
+
             }
         }
         return pixels2DFlou;
+    }
+
+    private Pixel[][] ScaleSpace2(double sigma) {
+        return null;
     }
 
 
@@ -179,7 +152,6 @@ public class Image {
         Pixel[][] pixelsDiff = new Pixel[firstImage.length][firstImage[0].length];
         for (int i = 0; i < firstImage.length; i++) {
             for (int j = 0; j < firstImage[0].length; j++) {
-//                System.out.println(firstImage[i][j]+" " +secondImage[i][j]);
                 pixelsDiff[i][j] = firstImage[i][j].diff(secondImage[i][j]);
             }
         }
@@ -189,6 +161,9 @@ public class Image {
     private void keyPoint() {
 
         //Log approx + ScaleSpace
+        for (double d = Math.sqrt(2) / 2; d < 18; d *= 2) {
+            writeImage(ScaleSpace(d), "png", name + "_" + d + "out.png");
+        }
         Pixel[][] pixelDiffOctave1 = diffImage(ScaleSpace(Math.sqrt(2) / 2), ScaleSpace(Math.sqrt(2)));
         Pixel[][] pixelDiffOctave2 = diffImage(ScaleSpace(Math.sqrt(2)), ScaleSpace(Math.sqrt(2) * 2));
         Pixel[][] pixelDiffOctave3 = diffImage(ScaleSpace(Math.sqrt(2) * 2), ScaleSpace(Math.sqrt(2) * 4));
@@ -215,11 +190,16 @@ public class Image {
         final Comparator<Pixel> comp = Comparator.comparingInt(p -> p.getR() + p.getG() + p.getB() + p.getA());
         Pixel pmax;
         for (int i = 0; i < pixelOct2.length; i++) {
-            System.out.println("" + i + " ");
             for (int j = 0; j < pixelOct2[0].length; j++) {
-                list_point.addAll(listContour(pixelOct1, i, j));
-                list_point.addAll(listContour(pixelOct2, i, j));
-                list_point.addAll(listContour(pixelOct3, i, j));
+                for (int k = i - 1; k < i + 2; k++) {
+                    for (int l = j - 1; l < j + 2; l++) {
+                        if (noOutOfBound(k, l, pixelOct1.length, pixelOct1[0].length)) {
+                            list_point.add(pixelOct1[k][l]);
+                            list_point.add(pixelOct2[k][l]);
+                            list_point.add(pixelOct3[k][l]);
+                        }
+                    }
+                }
                 pmax = list_point.stream().max(comp).get();
                 pixelKeyPoint[i][j] = pmax;
             }
@@ -227,34 +207,38 @@ public class Image {
         return pixelKeyPoint;
     }
 
-    private ArrayList<Pixel> listContour(Pixel[][] pixelOct1, int i, int j) {
-        ArrayList<Pixel> listP = new ArrayList<>();
-        listP.add(pixelOct1[i][j]);
-        if (i > 0) {
-            if (j > 0) {
-                listP.add(pixelOct1[i - 1][j - 1]);
-            }
-            if (j < pixelOct1[0].length - 1) {
-                listP.add(pixelOct1[i - 1][j + 1]);
-            }
-            listP.add(pixelOct1[i - 1][j]);
-        }
-        if (i < pixelOct1.length - 1) {
-            if (j < pixelOct1[0].length - 1) {
-                listP.add(pixelOct1[i + 1][j + 1]);
-            }
-            if (j > 0) {
-                listP.add(pixelOct1[i + 1][j - 1]);
-            }
-            listP.add(pixelOct1[i + 1][j]);
-        }
-        if (j > 0) {
-            listP.add(pixelOct1[i][j - 1]);
-        }
-        if (j < pixelOct1[0].length - 1) {
-            listP.add(pixelOct1[i][j + 1]);
-        }
-        return listP;
+    //
+//    private ArrayList<Pixel> listContour(Pixel[][] pixelOct1, int i, int j) {
+//        ArrayList<Pixel> listP = new ArrayList<>();
+//        listP.add(pixelOct1[i][j]);
+//        if (i > 0) {
+//            if (j > 0) {
+//                listP.add(pixelOct1[i - 1][j - 1]);
+//            }
+//            if (j < pixelOct1[0].length - 1) {
+//                listP.add(pixelOct1[i - 1][j + 1]);
+//            }
+//            listP.add(pixelOct1[i - 1][j]);
+//        }
+//        if (i < pixelOct1.length - 1) {
+//            if (j < pixelOct1[0].length - 1) {
+//                listP.add(pixelOct1[i + 1][j + 1]);
+//            }
+//            if (j > 0) {
+//                listP.add(pixelOct1[i + 1][j - 1]);
+//            }
+//            listP.add(pixelOct1[i + 1][j]);
+//        }
+//        if (j > 0) {
+//            listP.add(pixelOct1[i][j - 1]);
+//        }
+//        if (j < pixelOct1[0].length - 1) {
+//            listP.add(pixelOct1[i][j + 1]);
+//        }
+//        return listP;
+//    }
+    private boolean noOutOfBound(int i, int j, int size_i, int size_j) {
+        return i > 0 && j > 0 && i < size_i && j < size_j;
     }
 
     private void RidBadKeyPoint() {
