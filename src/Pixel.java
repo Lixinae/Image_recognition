@@ -16,6 +16,13 @@ public class Pixel {
         this.a=cp.a;
     }
 
+    Pixel(int val) {
+        this.r = val;
+        this.g = val;
+        this.b = val;
+        this.a = 0;
+    }
+
     @Override
     public String toString() {
         return "Pixel{" +

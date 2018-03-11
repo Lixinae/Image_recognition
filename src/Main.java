@@ -1,7 +1,4 @@
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,7 +53,8 @@ public class Main {
         System.out.println("///////////////////////////");
 
         Map<Image, Double> mapImage = new HashMap<>();
-        image_database.forEach(image1 -> mapImage.put(image1, image1.compare(img)));
+//        image_database.forEach(image1 -> mapImage.put(image1, image1.compare(img)));
+        image_database.forEach(image1 -> mapImage.put(image1, Compare.compare(image1, img)));
 
         // todo -> utiliser la moyenne plutot que 1 à 1
         mapImage.entrySet()
