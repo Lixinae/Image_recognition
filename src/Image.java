@@ -22,6 +22,7 @@ public class Image {
     private int[][][] histo_color;
     private double scale = 1.0;
     private double sigma = 0.5;
+    private Sift s;
 
     public Image(int id_image, String pathToImage) {
         this.id_image = id_image;
@@ -29,6 +30,7 @@ public class Image {
         this.name = constructName(pathToImage);
         initPixelTab();
         build();
+        s = new Sift(this);
     }
 
     public Image(Image im, double scale) {
@@ -49,12 +51,14 @@ public class Image {
      * @param height
      */
     public Image(int width, int height) {
+        this.name = "constructedImage" + width + " " + height;
         this.id_image = -1;
         this.width = width;
         this.height = height;
+        this.pixels2D = new Pixel[width][height];
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                pixels2D[i][j] = new Pixel(0, 0, 0, 0);
+                this.pixels2D[i][j] = new Pixel(0, 0, 0, 0);
             }
         }
         build();
@@ -74,7 +78,7 @@ public class Image {
     private void copyResized(Image im) {
         this.width = (int) (im.width * scale);
         this.height = (int) (im.height * scale);
-        this.pixels2D = new Pixel[height][width];
+        this.pixels2D = new Pixel[width][height];
         double x_ratio = im.width / (double) width;
         double y_ratio = im.height / (double) height;
         double px, py;
@@ -84,6 +88,7 @@ public class Image {
                 py = Math.floor(i * y_ratio);
                 pixels2D[i][j] = im.pixels2D[(int) py][(int) px];
             }
+
         }
     }
 
@@ -392,7 +397,7 @@ public class Image {
 
     @Override
     public String toString() {
-        writeImage(pixels2D, "png", "image_test/" + name + "_" + "out.png");
+        writeImage(pixels2D, "png", "image_test/" + super.toString() + "_" + "out.png");
         return "image written : " + "image_test/" + name + "_" + "out.png";
     }
 }

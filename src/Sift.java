@@ -4,14 +4,12 @@ import java.util.List;
 
 public class Sift {
 
-    Image im1;
-    Image im2;
-    List<Octave> listOctaveIm1 = new ArrayList<>();
-    List<Octave> listOctaveIm2 = new ArrayList<>();
+    Image im;
+    List<Octave> listOctaveIm = new ArrayList<>();
 
-    public Sift(Image im1, Image im2) {
-        this.im1 = im1;
-        this.im2 = im2;
+    public Sift(Image im) {
+        this.im = im;
+        applySiftIm();
     }
 
     //TODO Builds a one dimensional gaussian kernel.
@@ -35,24 +33,9 @@ public class Sift {
         return sum;
     }
 
-    public double compare() {
-        System.out.println("sift");
-        applySiftIm1();
-        applySiftIm2();
-        return 0.0;
-    }
-
-    private void applySiftIm1() {
-        listOctaveIm1 = ScaleSpace(im1);
-        for (Octave o : listOctaveIm1) {
-            System.out.println(o);
-        }
-
-    }
-
-    private void applySiftIm2() {
-        listOctaveIm2 = ScaleSpace(im2);
-        for (Octave o : listOctaveIm1) {
+    private void applySiftIm() {
+        listOctaveIm = ScaleSpace(im);
+        for (Octave o : listOctaveIm) {
             System.out.println(o);
         }
 
@@ -66,17 +49,17 @@ public class Sift {
         double sigmaVal1 = Math.sqrt(2);
         double sigmaVal2 = 1.0;
         //choix de sigma et passage de scale
-        for (int scale = 2, nbOctave = 0; nbOctave < 4; scale /= 2, nbOctave++, sigmaVal1 *= 2, sigmaVal2 *= 2) {
+        for (double scale = 2, nbOctave = 0; nbOctave < 4; scale /= 2, nbOctave++, sigmaVal1 *= 2, sigmaVal2 *= 2) {
             octave.add(imageFiltered(new Image(imGrey, scale), sigmaVal1 / 2));
             octave.add(imageFiltered(new Image(imGrey, scale), sigmaVal2));
             octave.add(imageFiltered(new Image(imGrey, scale), sigmaVal1));
             octave.add(imageFiltered(new Image(imGrey, scale), sigmaVal2 * 2));
             octave.add(imageFiltered(new Image(imGrey, scale), sigmaVal1 * 2));
             listOct.add(new Octave(octave));
+            octave.clear();
         }
         return listOct;
     }
-
     private Image imageFiltered(Image image, double sigma) {
         if (image == null) {
             throw new NullPointerException("image must not be null");

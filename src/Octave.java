@@ -1,7 +1,8 @@
+import java.util.ArrayList;
 import java.util.List;
 
 public class Octave {
-    List<Image> octave;
+    List<Image> octave = new ArrayList<>();
 
     public Octave(List<Image> images) {
         if (images.size() != 5) {
