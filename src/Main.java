@@ -2,9 +2,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Main {
 
@@ -33,7 +31,7 @@ public class Main {
         List<Image> image_database = recup_image_database("./image_base");
         String pathToImage = "./image_cible/cible1.jpg";
         int id = 0;
-        Image img = new Image(id, pathToImage);
+//        Image img = new Image(id, pathToImage);
 
 //        double max_diff = 1000000;
 //        String name = "";
@@ -51,19 +49,19 @@ public class Main {
 //        System.out.println("la cible est " + name);
 
         System.out.println("///////////////////////////");
-
-        Map<Image, Double> mapImage = new HashMap<>();
-        image_database.forEach(image1 -> mapImage.put(image1, image1.compare(img)));
-
-        // todo -> utiliser la moyenne plutot que 1 à 1
-        mapImage.entrySet()
-                .stream()
-                .min((entry1, entry2) -> {
-                    double d1 = entry1.getValue(), d2 = entry2.getValue();
-                    return Double.compare(d1, d2);
-                })
-                .ifPresent(val ->System.out.println("Closest is : "+val.getKey().getName() + " Value : "+val.getValue()));
-
+//
+//        Map<Image, Double> mapImage = new HashMap<>();
+//        image_database.forEach(image1 -> mapImage.put(image1, image1.compare(img)));
+//
+//        // todo -> utiliser la moyenne plutot que 1 à 1
+//        mapImage.entrySet()
+//                .stream()
+//                .min((entry1, entry2) -> {
+//                    double d1 = entry1.getValue(), d2 = entry2.getValue();
+//                    return Double.compare(d1, d2);
+//                })
+//                .ifPresent(val ->System.out.println("Closest is : "+val.getKey().getName() + " Value : "+val.getValue()));
+//
     }
 
 

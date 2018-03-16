@@ -1,29 +1,45 @@
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.commons.math3.distribution.NormalDistribution;
 
-//
-//import org.apache.commons.math3.exception.*;
-//import org.apache.commons.math3.distribution.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 
 public class Sift {
 
     Image im;
+    Image imGrey;
     List<Octave> listOctaveIm = new ArrayList<>();
+    List<TheCon> listConIm = new ArrayList<>();
+    List<DoG> listDoGIm = new ArrayList<>();
 
     public Sift(Image im) {
         this.im = im;
         applySiftIm();
     }
 
-    //TODO Builds a one dimensional gaussian kernel.
+    /**
+     * Builds a one dimensional gaussian kernel.
+     *
+     * @param sigma Standard deviation of the kernel.
+     * @return Discretized kernel. Array length is odd, kernel is centered.
+     */
     private static double[] buildKernel(final double sigma) {
 
         int windowSize = (int) Math.ceil(4 * sigma);
 
-        double[] kernel;
-        kernel = new double[2 * windowSize + 1];
-        //TODO
+        NormalDistribution ndist = new NormalDistribution(0.0, sigma, Double.MIN_NORMAL);
+
+        double[] kernel = new double[2 * windowSize + 1];
+        double sum = 0;
+        for (int i = 0; i < kernel.length; i++) {
+            double x = i - windowSize;
+            kernel[i] = ndist.cumulativeProbability(x - 0.5, x + 0.5);
+            sum += kernel[i];
+        }
+        for (int i = 0; i < kernel.length; i++) {
+            kernel[i] /= sum;
+        }
 
         return kernel;
     }
@@ -38,16 +54,20 @@ public class Sift {
     }
 
     private void applySiftIm() {
-        listOctaveIm = ScaleSpace(im);
+        listOctaveIm = ScaleSpace();
         for (Octave o : listOctaveIm) {
             System.out.println(o);
+        }
+        keyPoint();
+        for (TheCon c : listConIm) {
+            System.out.println(c);
         }
 
     }
 
     //appliquer 5 niveau de flou aux 4 images
-    private List<Octave> ScaleSpace(Image im) {
-        Image imGrey = im.greyCopy();
+    private List<Octave> ScaleSpace() {
+        imGrey = im.greyCopy();
         List<Octave> listOct = new ArrayList<>();
         List<Image> octave = new ArrayList<>();
         double sigmaVal1 = Math.sqrt(2);
@@ -64,6 +84,7 @@ public class Sift {
         }
         return listOct;
     }
+
     private Image imageFiltered(Image image, double sigma) {
         if (image == null) {
             throw new NullPointerException("image must not be null");
@@ -139,35 +160,35 @@ public class Sift {
 
     }
 
-    private Pixel applyFilterToPixel(Image im, int i, int j, double[][] filter) {
-        double sumPixelR = 0, sumPixelB = 0, sumPixelG = 0, sumPixelA = 0;
-        double sumFiltre = 0;
+//    private Pixel applyFilterToPixel(Image im, int i, int j, double[][] filter) {
+//        double sumPixelR = 0, sumPixelB = 0, sumPixelG = 0, sumPixelA = 0;
+//        double sumFiltre = 0;
+//
+//        for (int k = i - 1; k < i + 2; k++) {
+//            for (int l = j - 1; l < j + 2; l++) {
+//                if (noOutOfBound(k, l, im.getTabPixel().length, im.getTabPixel()[0].length)) {
+//                    sumPixelR += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getR();
+//                    sumPixelG += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getG();
+//                    sumPixelB += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getB();
+//                    sumPixelA += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getA();
+//                }
+//            }
+//        }
+//        for (int k = 0; k < 3; k++) {
+//            for (int l = 0; l < 3; l++) {
+//                sumFiltre += filter[k][l];
+//            }
+//        }
+//        System.out.println(sumFiltre);
+//        return new Pixel(((Double) (sumPixelR / sumFiltre)).intValue(), ((Double) (sumPixelG / sumFiltre)).intValue(), ((Double) (sumPixelB / sumFiltre)).intValue(), ((Double) (sumPixelA / sumFiltre)).intValue());
+//    }
 
-        for (int k = i - 1; k < i + 2; k++) {
-            for (int l = j - 1; l < j + 2; l++) {
-                if (noOutOfBound(k, l, im.getTabPixel().length, im.getTabPixel()[0].length)) {
-                    sumPixelR += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getR();
-                    sumPixelG += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getG();
-                    sumPixelB += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getB();
-                    sumPixelA += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getA();
-                }
-            }
-        }
-        for (int k = 0; k < 3; k++) {
-            for (int l = 0; l < 3; l++) {
-                sumFiltre += filter[k][l];
-            }
-        }
-        System.out.println(sumFiltre);
-        return new Pixel(((Double) (sumPixelR / sumFiltre)).intValue(), ((Double) (sumPixelG / sumFiltre)).intValue(), ((Double) (sumPixelB / sumFiltre)).intValue(), ((Double) (sumPixelA / sumFiltre)).intValue());
-    }
 
-
-    private double convol(Image im, int x, int y, double sigma) {
-        x -= im.getTabPixel().length / 2;
-        y -= im.getTabPixel()[0].length / 2;
-        return ((Math.exp(-(x * x + y * y) / (2 * sigma * sigma)))) / (2 * Math.PI * sigma * sigma);
-    }
+//    private double convol(Image im, int x, int y, double sigma) {
+//        x -= im.getTabPixel().length / 2;
+//        y -= im.getTabPixel()[0].length / 2;
+//        return ((Math.exp(-(x * x + y * y) / (2 * sigma * sigma)))) / (2 * Math.PI * sigma * sigma);
+//    }
 
     //la meme taille des image
     private Pixel[][] diffImage(Pixel[][] firstImage, Pixel[][] secondImage) {
@@ -180,54 +201,61 @@ public class Sift {
         return pixelsDiff;
     }
 
-//    private void keyPoint(Image im) {
-//
-//        //Log approx + ScaleSpace
-//        for (double d = Math.sqrt(2) / 2; d < 18; d *= 2) {
-//            im.writeImage(ScaleSpace(im1,d), "png", "image_test/" + im.getName() + "_" + d + "out.png");
-//        }
-//        Pixel[][] pixelDiffOctave1 = diffImage(ScaleSpace(im,Math.sqrt(2) / 2), ScaleSpace(im,Math.sqrt(2)));
-//        Pixel[][] pixelDiffOctave2 = diffImage(ScaleSpace(im,Math.sqrt(2)), ScaleSpace(im,Math.sqrt(2) * 2));
-//        Pixel[][] pixelDiffOctave3 = diffImage(ScaleSpace(im,Math.sqrt(2) * 2), ScaleSpace(im,Math.sqrt(2) * 4));
-//        Pixel[][] pixelDiffOctave4 = diffImage(ScaleSpace(im,Math.sqrt(2) * 4), ScaleSpace(im,Math.sqrt(2) * 8));
-//
-//        System.out.println("write");
-//        im.writeImage(pixelDiffOctave1, "png", "image_test/" + im.getName() + "out1.png");
-//        im.writeImage(pixelDiffOctave2, "png", "image_test/" + im.getName() + "out2.png");
-//        im.writeImage(pixelDiffOctave3, "png", "image_test/" + im.getName() + "out3.png");
-//        im.writeImage(pixelDiffOctave4, "png", "image_test/" + im.getName() + "out4.png");
-//        System.out.println("finwrite");
+    private void keyPoint() {
+        int i = 0;
+        for (Octave o : listOctaveIm) {
+            List<Image> oct = o.getOctave();
+            List<Image> con = new ArrayList<>();
+            con.add(new Image("con" + oct.get(0).getName() + i, diffImage(oct.get(0).getTabPixel(), oct.get(1).getTabPixel())));
+            i++;
+            con.add(new Image("con" + oct.get(1).getName() + i, diffImage(oct.get(1).getTabPixel(), oct.get(2).getTabPixel())));
+            i++;
+            con.add(new Image("con" + oct.get(2).getName() + i, diffImage(oct.get(2).getTabPixel(), oct.get(3).getTabPixel())));
+            i++;
+            con.add(new Image("con" + oct.get(3).getName() + i, diffImage(oct.get(3).getTabPixel(), oct.get(4).getTabPixel())));
+            i++;
+            listConIm.add(new TheCon(con));
+        }
+        i = 0;
+        for (TheCon c : listConIm) {
+            List<Image> con = c.getCon();
+            List<Image> dog = new ArrayList<>();
+            dog.add(new Image("dog" + con.get(0).getName() + i, findKeyPoint(con.get(0).getTabPixel(), con.get(1).getTabPixel(), con.get(2).getTabPixel())));
+            dog.add(new Image("dog" + con.get(0).getName() + i, findKeyPoint(con.get(1).getTabPixel(), con.get(2).getTabPixel(), con.get(3).getTabPixel())));
+
+            i++;
+        }
 //        Pixel[][] pixelKeyPoint1 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
 //        Pixel[][] pixelKeyPoint2 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
-//
-//        //pixelKeyPoint1 = findKeyPoint(pixelDiffOctave1, pixelDiffOctave2, pixelDiffOctave3);
-//        //pixelKeyPoint2 = findKeyPoint(pixelDiffOctave2, pixelDiffOctave3, pixelDiffOctave4);
-//        System.out.println("fin");
-//
-//    }
-//
-//    private Pixel[][] findKeyPoint(Pixel[][] pixelOct1, Pixel[][] pixelOct2, Pixel[][] pixelOct3) {
-//        ArrayList<Pixel> list_point = new ArrayList<>();
-//        Pixel[][] pixelKeyPoint = new Pixel[pixelOct2.length][pixelOct2[0].length];
-//        final Comparator<Pixel> comp = Comparator.comparingInt(p -> p.getR() + p.getG() + p.getB() + p.getA());
-//        Pixel pmax;
-//        for (int i = 0; i < pixelOct2.length; i++) {
-//            for (int j = 0; j < pixelOct2[0].length; j++) {
-//                for (int k = i - 1; k < i + 2; k++) {
-//                    for (int l = j - 1; l < j + 2; l++) {
-//                        if (noOutOfBound(k, l, pixelOct1.length, pixelOct1[0].length)) {
-//                            list_point.add(pixelOct1[k][l]);
-//                            list_point.add(pixelOct2[k][l]);
-//                            list_point.add(pixelOct3[k][l]);
-//                        }
-//                    }
-//                }
-//                pmax = list_point.stream().max(comp).get();
-//                pixelKeyPoint[i][j] = pmax;
-//            }
-//        }
-//        return pixelKeyPoint;
-//    }
+
+        //pixelKeyPoint1 = findKeyPoint(pixelDiffOctave1, pixelDiffOctave2, pixelDiffOctave3);
+        //pixelKeyPoint2 = findKeyPoint(pixelDiffOctave2, pixelDiffOctave3, pixelDiffOctave4);
+        System.out.println("fin");
+
+    }
+
+    private Pixel[][] findKeyPoint(Pixel[][] pixelOct1, Pixel[][] pixelOct2, Pixel[][] pixelOct3) {
+        ArrayList<Pixel> list_point = new ArrayList<>();
+        Pixel[][] pixelKeyPoint = new Pixel[pixelOct2.length][pixelOct2[0].length];
+        final Comparator<Pixel> comp = Comparator.comparingInt(p -> p.getR() + p.getG() + p.getB() + p.getA());
+        Pixel pmax;
+        for (int i = 0; i < pixelOct2.length; i++) {
+            for (int j = 0; j < pixelOct2[0].length; j++) {
+                for (int k = i - 1; k < i + 2; k++) {
+                    for (int l = j - 1; l < j + 2; l++) {
+                        if (noOutOfBound(k, l, pixelOct1.length, pixelOct1[0].length)) {
+                            list_point.add(pixelOct1[k][l]);
+                            list_point.add(pixelOct2[k][l]);
+                            list_point.add(pixelOct3[k][l]);
+                        }
+                    }
+                }
+                pmax = list_point.stream().max(comp).get();
+                pixelKeyPoint[i][j] = pmax;
+            }
+        }
+        return pixelKeyPoint;
+    }
 
 
     private boolean noOutOfBound(int i, int j, int size_i, int size_j) {

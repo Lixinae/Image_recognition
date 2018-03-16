@@ -37,7 +37,7 @@ public class Image {
         //TODO modif id image? a voir comment s'en servir
         this.id_image = im.id_image;
         this.pathToImage = im.pathToImage;
-        this.name = im.name;
+        this.name = im.name + "resize" + scale;
         this.scale = scale;
         this.sigma = im.sigma;
         copyResized(im);
@@ -51,7 +51,7 @@ public class Image {
      * @param height
      */
     public Image(int width, int height) {
-        this.name = "constructedImage" + width + " " + height;
+        this.name = "constructedImage " + width + " " + height;
         this.id_image = -1;
         this.width = width;
         this.height = height;
@@ -62,6 +62,15 @@ public class Image {
             }
         }
         build();
+    }
+
+    public Image(String name, Pixel[][] p) {
+        id_image = -1;
+        pixels2D = p;
+        pathToImage = "image_test/";
+        this.name = name;
+        width = p.length;
+        height = p[0].length;
     }
 
     public Image greyCopy() {
@@ -397,7 +406,11 @@ public class Image {
 
     @Override
     public String toString() {
-        writeImage(pixels2D, "png", "image_test/" + super.toString() + "_" + "out.png");
+        writeImage(pixels2D, "png", "image_test/" + name + "_" + "out.png");
         return "image written : " + "image_test/" + name + "_" + "out.png";
+    }
+
+    public void addSuffixeName(String i) {
+        name += i;
     }
 }
