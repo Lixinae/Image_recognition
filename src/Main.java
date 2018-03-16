@@ -1,6 +1,9 @@
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,8 +25,17 @@ public class Main {
         return listImage;
     }
 
-
-//    public static int[]
+    private static void cleanDirectory(Path path) throws IOException {
+        if(Files.isDirectory(path)){
+            Files.list(path).forEach(p->{
+                try {
+                    Files.delete(p);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+    }
 
     public static void main(String[] args) throws IOException {
 
@@ -49,6 +61,7 @@ public class Main {
 //        System.out.println("la cible est " + name);
 
         System.out.println("///////////////////////////");
+        cleanDirectory(Paths.get("./image_test"));
 //
 //        Map<Image, Double> mapImage = new HashMap<>();
 //        image_database.forEach(image1 -> mapImage.put(image1, image1.compare(img)));
