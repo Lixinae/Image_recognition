@@ -1,7 +1,8 @@
+import javafx.util.Pair;
 import org.apache.commons.math3.distribution.NormalDistribution;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -16,6 +17,23 @@ public class Sift {
     public Sift(Image im) {
         this.im = im;
         applySiftIm();
+    }
+
+    private void applySiftIm() {
+        listOctaveIm = ScaleSpace();
+        for (Octave o : listOctaveIm) {
+            System.out.println(o);
+        }
+        keyPoint();
+        for (TheCon c : listConIm) {
+            System.out.println(c);
+        }
+        DoG();
+        for (DoG d : listDoGIm) {
+            System.out.println(d);
+        }
+
+        System.out.println("fin");
     }
 
     /**
@@ -51,18 +69,6 @@ public class Sift {
             sum[i + 1] = sum[i] + kernel[i];
         }
         return sum;
-    }
-
-    private void applySiftIm() {
-        listOctaveIm = ScaleSpace();
-        for (Octave o : listOctaveIm) {
-            System.out.println(o);
-        }
-        keyPoint();
-        for (TheCon c : listConIm) {
-            System.out.println(c);
-        }
-
     }
 
     //appliquer 5 niveau de flou aux 4 images
@@ -216,44 +222,78 @@ public class Sift {
             i++;
             listConIm.add(new TheCon(con));
         }
-        i = 0;
+
+    }
+
+    private void DoG() {
+
+        int i = 0;
         for (TheCon c : listConIm) {
             List<Image> con = c.getCon();
             List<Image> dog = new ArrayList<>();
             dog.add(new Image("dog" + con.get(0).getName() + i, findKeyPoint(con.get(0).getTabPixel(), con.get(1).getTabPixel(), con.get(2).getTabPixel())));
             dog.add(new Image("dog" + con.get(0).getName() + i, findKeyPoint(con.get(1).getTabPixel(), con.get(2).getTabPixel(), con.get(3).getTabPixel())));
-
+            listDoGIm.add(new DoG(dog));
             i++;
         }
-//        Pixel[][] pixelKeyPoint1 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
-//        Pixel[][] pixelKeyPoint2 = new Pixel[pixelDiffOctave2.length][pixelDiffOctave2[0].length];
-
-        //pixelKeyPoint1 = findKeyPoint(pixelDiffOctave1, pixelDiffOctave2, pixelDiffOctave3);
-        //pixelKeyPoint2 = findKeyPoint(pixelDiffOctave2, pixelDiffOctave3, pixelDiffOctave4);
-        System.out.println("fin");
-
     }
 
     private Pixel[][] findKeyPoint(Pixel[][] pixelOct1, Pixel[][] pixelOct2, Pixel[][] pixelOct3) {
-        ArrayList<Pixel> list_point = new ArrayList<>();
+
         Pixel[][] pixelKeyPoint = new Pixel[pixelOct2.length][pixelOct2[0].length];
-        final Comparator<Pixel> comp = Comparator.comparingInt(p -> p.getR() + p.getG() + p.getB() + p.getA());
-        Pixel pmax;
-        for (int i = 0; i < pixelOct2.length; i++) {
-            for (int j = 0; j < pixelOct2[0].length; j++) {
-                for (int k = i - 1; k < i + 2; k++) {
-                    for (int l = j - 1; l < j + 2; l++) {
-                        if (noOutOfBound(k, l, pixelOct1.length, pixelOct1[0].length)) {
-                            list_point.add(pixelOct1[k][l]);
-                            list_point.add(pixelOct2[k][l]);
-                            list_point.add(pixelOct3[k][l]);
-                        }
-                    }
-                }
-                pmax = list_point.stream().max(comp).get();
-                pixelKeyPoint[i][j] = pmax;
+
+        for (int i = 0; i < pixelKeyPoint.length; i++) {
+            for (int j = 0; j < pixelKeyPoint[0].length; j++) {
+                pixelKeyPoint[i][j] = new Pixel(0, 0, 0, 0);
             }
         }
+
+        HashMap<Pair<Integer, Integer>, Pixel> map = new HashMap<>();
+
+        for (int i = 1; i < pixelOct2.length - 1; i++) {
+            for (int j = 1; j < pixelOct2[0].length - 1; j++) {
+                boolean isExtremum = true;
+                float value = pixelOct2[i][j].getR();
+                float sign = Math.signum(value - pixelOct2[i][j - 1].getR());
+
+                isExtremum &= pixelOct1[i - 1][j - 1].getR() * sign < value;
+                isExtremum &= pixelOct1[i - 1][j].getR() * sign < value;
+                isExtremum &= pixelOct1[i - 1][j + 1].getR() * sign < value;
+                isExtremum &= pixelOct1[i][j - 1].getR() * sign < value;
+                isExtremum &= pixelOct1[i][j].getR() * sign < value;
+                isExtremum &= pixelOct1[i][j + 1].getR() * sign < value;
+                isExtremum &= pixelOct1[i + 1][j - 1].getR() * sign < value;
+                isExtremum &= pixelOct1[i + 1][j].getR() * sign < value;
+                isExtremum &= pixelOct1[i + 1][j + 1].getR() * sign < value;
+
+                isExtremum &= pixelOct2[i - 1][j - 1].getR() * sign < value;
+                isExtremum &= pixelOct2[i - 1][j].getR() * sign < value;
+                isExtremum &= pixelOct2[i - 1][j + 1].getR() * sign < value;
+                isExtremum &= pixelOct2[i][j - 1].getR() * sign < value;
+                isExtremum &= pixelOct2[i][j + 1].getR() * sign < value;
+                isExtremum &= pixelOct2[i + 1][j - 1].getR() * sign < value;
+                isExtremum &= pixelOct2[i + 1][j].getR() * sign < value;
+                isExtremum &= pixelOct2[i + 1][j + 1].getR() * sign < value;
+
+                isExtremum &= pixelOct3[i - 1][j - 1].getR() * sign < value;
+                isExtremum &= pixelOct3[i - 1][j].getR() * sign < value;
+                isExtremum &= pixelOct3[i - 1][j + 1].getR() * sign < value;
+                isExtremum &= pixelOct3[i][j - 1].getR() * sign < value;
+                isExtremum &= pixelOct3[i][j].getR() * sign < value;
+                isExtremum &= pixelOct3[i][j + 1].getR() * sign < value;
+                isExtremum &= pixelOct3[i + 1][j - 1].getR() * sign < value;
+                isExtremum &= pixelOct3[i + 1][j].getR() * sign < value;
+                isExtremum &= pixelOct3[i + 1][j + 1].getR() * sign < value;
+                if (isExtremum) {
+                    map.put(new Pair<>(i, j), pixelOct2[i][j]);
+                }
+            }
+        }
+
+        map.forEach((p, v) -> {
+            pixelKeyPoint[p.getKey()][p.getValue()] = v;
+        });
+
         return pixelKeyPoint;
     }
 
