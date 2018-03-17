@@ -39,6 +39,8 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
+        Path path = Paths.get("./image_test");
+        cleanDirectory(path);
         BufferedImage image = new BufferedImage(833, 1200, BufferedImage.TYPE_INT_ARGB);
         List<Image> image_database = recup_image_database("./image_base");
         String pathToImage = "./image_cible/cible1.jpg";
@@ -61,7 +63,6 @@ public class Main {
 //        System.out.println("la cible est " + name);
 
         System.out.println("///////////////////////////");
-        cleanDirectory(Paths.get("./image_test"));
 //
 //        Map<Image, Double> mapImage = new HashMap<>();
 //        image_database.forEach(image1 -> mapImage.put(image1, image1.compare(img)));

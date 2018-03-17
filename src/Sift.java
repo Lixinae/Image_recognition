@@ -13,6 +13,7 @@ public class Sift {
     List<Octave> listOctaveIm = new ArrayList<>();
     List<TheCon> listConIm = new ArrayList<>();
     List<DoG> listDoGIm = new ArrayList<>();
+    List<DoG> listDoGFilteredIm = new ArrayList<>();
 
     public Sift(Image im) {
         this.im = im;
@@ -32,6 +33,11 @@ public class Sift {
         for (DoG d : listDoGIm) {
             System.out.println(d);
         }
+        filtreDoG();
+        for (DoG d : listDoGFilteredIm) {
+            System.out.println(d);
+        }
+
 
         System.out.println("fin");
     }
@@ -238,6 +244,18 @@ public class Sift {
         }
     }
 
+    private void filtreDoG() {
+        int i = 0;
+        for (DoG d : listDoGIm) {
+            List<Image> dog = d.getDoG();
+            List<Image> dogF = new ArrayList<>();
+            dogF.add(new Image("dogF" + dog.get(0).getName() + i, RidBadKeyPoint(dog.get(0).getTabPixel())));
+            dogF.add(new Image("dogF" + dog.get(0).getName() + i, RidBadKeyPoint(dog.get(1).getTabPixel())));
+            listDoGFilteredIm.add(new DoG(dogF));
+            i++;
+        }
+    }
+
     private Pixel[][] findKeyPoint(Pixel[][] pixelOct1, Pixel[][] pixelOct2, Pixel[][] pixelOct3) {
 
         Pixel[][] pixelKeyPoint = new Pixel[pixelOct2.length][pixelOct2[0].length];
@@ -302,9 +320,31 @@ public class Sift {
         return i >= 0 && j >= 0 && i < size_i && j < size_j;
     }
 
-    private void RidBadKeyPoint() {
+    private Pixel[][] RidBadKeyPoint(Pixel[][] pixels) {
 
+        Pixel[][] pixelsFiltered = edgeFilter(contrastFilter(pixels));
+        return pixelsFiltered;
     }
+
+    private Pixel[][] contrastFilter(Pixel[][] pixels) {
+        Pixel[][] pixels1 = new Pixel[pixels.length][pixels[0].length];
+        for (int i = 0; i < pixels.length; i++) {
+            for (int j = 0; j < pixels[0].length; j++) {
+                if (pixels[i][j].getR() < 4 && pixels[i][j].getR() > 0) {
+                    pixels1[i][j] = new Pixel(0, 0, 0, 0);
+                } else {
+                    pixels1[i][j] = new Pixel(pixels[i][j]);
+                }
+            }
+        }
+        return pixels1;
+    }
+
+    private Pixel[][] edgeFilter(Pixel[][] pixels) {
+
+        return pixels;
+    }
+
 
     private void AssignOrientationKeyPoint() {
 
