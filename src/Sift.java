@@ -23,11 +23,11 @@ public class Sift {
     private void applySiftIm() {
         listOctaveIm = ScaleSpace();
         for (Octave o : listOctaveIm) {
-            System.out.println(o);
+//            System.out.println(o);
         }
         keyPoint();
         for (TheCon c : listConIm) {
-            System.out.println(c);
+//            System.out.println(c);
         }
         DoG();
         for (DoG d : listDoGIm) {
@@ -97,22 +97,22 @@ public class Sift {
         return listOct;
     }
 
-    private Image imageFiltered(Image image, double sigma) {
-        if (image == null) {
+    private Image imageFiltered(Image im, double sigma) {
+        if (im == null) {
             throw new NullPointerException("image must not be null");
         }
-        if (sigma < image.getSigma()) {
+        if (sigma < im.getSigma()) {
             throw new IllegalArgumentException("cannot reduce sigma");
         }
 
-        final double scale = image.getScale();
-        final double imageSigma = image.getSigma() * scale;
+        final double scale = im.getScale();
+        final double imageSigma = im.getSigma() * scale;
         final double targetSigma = sigma * scale;
         double filterSigma = Math.sqrt(targetSigma * targetSigma - imageSigma * imageSigma);
 
         if (filterSigma == 0.0) {
             // Dirac delta function, output is input
-            return new Image(image, 1);
+            return new Image(im, 1);
         }
 
         double[] kernel = buildKernel(filterSigma);
@@ -120,17 +120,17 @@ public class Sift {
         int window = (kernel.length - 1) / 2;
 
         // horizontal pass
-        double[][] horizontal = new double[image.getWidth()][image.getHeight()];
-        for (int row = 0; row < image.getWidth(); row++) {
-            for (int col = 0; col < image.getHeight(); col++) {
+        double[][] horizontal = new double[im.getWidth()][im.getHeight()];
+        for (int row = 0; row < im.getWidth(); row++) {
+            for (int col = 0; col < im.getHeight(); col++) {
 
                 int kernelFrom = Math.max(window - col, 0);
                 int kernelTo = window
-                        + Math.min(image.getHeight() - 1 - col, window);
+                        + Math.min(im.getHeight() - 1 - col, window);
 
                 double value = 0;
                 for (int i = kernelFrom; i <= kernelTo; i++) {
-                    value += kernel[i] * image.getGreyPixel(row, col - window + i);
+                    value += kernel[i] * im.getGreyPixel(row, col - window + i);
                 }
                 double weight = cumulativeKernel[kernelTo + 1]
                         - cumulativeKernel[kernelFrom];
@@ -139,16 +139,16 @@ public class Sift {
             }
         }
 
-        Image result = new Image(image.getWidth(), image.getHeight());
+        Image result = new Image(im.getWidth(), im.getHeight());
 
         // vertical pass (in-place)
-        double[][] vertical = new double[image.getWidth()][image.getHeight()];
-        for (int col = 0; col < image.getHeight(); col++) {
-            for (int row = 0; row < image.getWidth(); row++) {
+        double[][] vertical = new double[im.getWidth()][im.getHeight()];
+        for (int col = 0; col < im.getHeight(); col++) {
+            for (int row = 0; row < im.getWidth(); row++) {
 
                 int kernelFrom = Math.max(window - row, 0);
                 int kernelTo = window
-                        + Math.min(image.getWidth() - 1 - row, window);
+                        + Math.min(im.getWidth() - 1 - row, window);
 
                 double value = 0;
                 for (int i = kernelFrom; i <= kernelTo; i++) {
@@ -162,8 +162,8 @@ public class Sift {
             }
         }
 
-        for (int row = 0; row < image.getWidth(); row++) {
-            for (int col = 0; col < image.getHeight(); col++) {
+        for (int row = 0; row < im.getWidth(); row++) {
+            for (int col = 0; col < im.getHeight(); col++) {
                 result.setGreyPixel(row, col, (int) vertical[row][col]);
             }
         }
@@ -172,35 +172,6 @@ public class Sift {
 
     }
 
-//    private Pixel applyFilterToPixel(Image im, int i, int j, double[][] filter) {
-//        double sumPixelR = 0, sumPixelB = 0, sumPixelG = 0, sumPixelA = 0;
-//        double sumFiltre = 0;
-//
-//        for (int k = i - 1; k < i + 2; k++) {
-//            for (int l = j - 1; l < j + 2; l++) {
-//                if (noOutOfBound(k, l, im.getTabPixel().length, im.getTabPixel()[0].length)) {
-//                    sumPixelR += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getR();
-//                    sumPixelG += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getG();
-//                    sumPixelB += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getB();
-//                    sumPixelA += filter[k - (i - 1)][l - (j - 1)] * im.getTabPixel()[k][l].getA();
-//                }
-//            }
-//        }
-//        for (int k = 0; k < 3; k++) {
-//            for (int l = 0; l < 3; l++) {
-//                sumFiltre += filter[k][l];
-//            }
-//        }
-//        System.out.println(sumFiltre);
-//        return new Pixel(((Double) (sumPixelR / sumFiltre)).intValue(), ((Double) (sumPixelG / sumFiltre)).intValue(), ((Double) (sumPixelB / sumFiltre)).intValue(), ((Double) (sumPixelA / sumFiltre)).intValue());
-//    }
-
-
-//    private double convol(Image im, int x, int y, double sigma) {
-//        x -= im.getTabPixel().length / 2;
-//        y -= im.getTabPixel()[0].length / 2;
-//        return ((Math.exp(-(x * x + y * y) / (2 * sigma * sigma)))) / (2 * Math.PI * sigma * sigma);
-//    }
 
     //la meme taille des image
     private Pixel[][] diffImage(Pixel[][] firstImage, Pixel[][] secondImage) {
@@ -260,49 +231,45 @@ public class Sift {
 
         Pixel[][] pixelKeyPoint = new Pixel[pixelOct2.length][pixelOct2[0].length];
 
-        for (int i = 0; i < pixelKeyPoint.length; i++) {
-            for (int j = 0; j < pixelKeyPoint[0].length; j++) {
-                pixelKeyPoint[i][j] = new Pixel(0, 0, 0, 0);
-            }
-        }
+        blackPixels(pixelKeyPoint);
 
         HashMap<Pair<Integer, Integer>, Pixel> map = new HashMap<>();
 
         for (int i = 1; i < pixelOct2.length - 1; i++) {
             for (int j = 1; j < pixelOct2[0].length - 1; j++) {
-                boolean isExtremum = true;
+                boolean isMax = true;
                 float value = pixelOct2[i][j].getR();
                 float sign = Math.signum(value - pixelOct2[i][j - 1].getR());
 
-                isExtremum &= pixelOct1[i - 1][j - 1].getR() * sign < value;
-                isExtremum &= pixelOct1[i - 1][j].getR() * sign < value;
-                isExtremum &= pixelOct1[i - 1][j + 1].getR() * sign < value;
-                isExtremum &= pixelOct1[i][j - 1].getR() * sign < value;
-                isExtremum &= pixelOct1[i][j].getR() * sign < value;
-                isExtremum &= pixelOct1[i][j + 1].getR() * sign < value;
-                isExtremum &= pixelOct1[i + 1][j - 1].getR() * sign < value;
-                isExtremum &= pixelOct1[i + 1][j].getR() * sign < value;
-                isExtremum &= pixelOct1[i + 1][j + 1].getR() * sign < value;
+                isMax &= pixelOct1[i - 1][j - 1].getR() * sign < value;
+                isMax &= pixelOct1[i - 1][j].getR() * sign < value;
+                isMax &= pixelOct1[i - 1][j + 1].getR() * sign < value;
+                isMax &= pixelOct1[i][j - 1].getR() * sign < value;
+                isMax &= pixelOct1[i][j].getR() * sign < value;
+                isMax &= pixelOct1[i][j + 1].getR() * sign < value;
+                isMax &= pixelOct1[i + 1][j - 1].getR() * sign < value;
+                isMax &= pixelOct1[i + 1][j].getR() * sign < value;
+                isMax &= pixelOct1[i + 1][j + 1].getR() * sign < value;
 
-                isExtremum &= pixelOct2[i - 1][j - 1].getR() * sign < value;
-                isExtremum &= pixelOct2[i - 1][j].getR() * sign < value;
-                isExtremum &= pixelOct2[i - 1][j + 1].getR() * sign < value;
-                isExtremum &= pixelOct2[i][j - 1].getR() * sign < value;
-                isExtremum &= pixelOct2[i][j + 1].getR() * sign < value;
-                isExtremum &= pixelOct2[i + 1][j - 1].getR() * sign < value;
-                isExtremum &= pixelOct2[i + 1][j].getR() * sign < value;
-                isExtremum &= pixelOct2[i + 1][j + 1].getR() * sign < value;
+                isMax &= pixelOct2[i - 1][j - 1].getR() * sign < value;
+                isMax &= pixelOct2[i - 1][j].getR() * sign < value;
+                isMax &= pixelOct2[i - 1][j + 1].getR() * sign < value;
+                isMax &= pixelOct2[i][j - 1].getR() * sign < value;
+                isMax &= pixelOct2[i][j + 1].getR() * sign < value;
+                isMax &= pixelOct2[i + 1][j - 1].getR() * sign < value;
+                isMax &= pixelOct2[i + 1][j].getR() * sign < value;
+                isMax &= pixelOct2[i + 1][j + 1].getR() * sign < value;
 
-                isExtremum &= pixelOct3[i - 1][j - 1].getR() * sign < value;
-                isExtremum &= pixelOct3[i - 1][j].getR() * sign < value;
-                isExtremum &= pixelOct3[i - 1][j + 1].getR() * sign < value;
-                isExtremum &= pixelOct3[i][j - 1].getR() * sign < value;
-                isExtremum &= pixelOct3[i][j].getR() * sign < value;
-                isExtremum &= pixelOct3[i][j + 1].getR() * sign < value;
-                isExtremum &= pixelOct3[i + 1][j - 1].getR() * sign < value;
-                isExtremum &= pixelOct3[i + 1][j].getR() * sign < value;
-                isExtremum &= pixelOct3[i + 1][j + 1].getR() * sign < value;
-                if (isExtremum) {
+                isMax &= pixelOct3[i - 1][j - 1].getR() * sign < value;
+                isMax &= pixelOct3[i - 1][j].getR() * sign < value;
+                isMax &= pixelOct3[i - 1][j + 1].getR() * sign < value;
+                isMax &= pixelOct3[i][j - 1].getR() * sign < value;
+                isMax &= pixelOct3[i][j].getR() * sign < value;
+                isMax &= pixelOct3[i][j + 1].getR() * sign < value;
+                isMax &= pixelOct3[i + 1][j - 1].getR() * sign < value;
+                isMax &= pixelOct3[i + 1][j].getR() * sign < value;
+                isMax &= pixelOct3[i + 1][j + 1].getR() * sign < value;
+                if (isMax) {
                     map.put(new Pair<>(i, j), pixelOct2[i][j]);
                 }
             }
@@ -311,8 +278,15 @@ public class Sift {
         map.forEach((p, v) -> {
             pixelKeyPoint[p.getKey()][p.getValue()] = v;
         });
-
         return pixelKeyPoint;
+    }
+
+    private void blackPixels(Pixel[][] pixelKeyPoint) {
+        for (int i = 0; i < pixelKeyPoint.length; i++) {
+            for (int j = 0; j < pixelKeyPoint[0].length; j++) {
+                pixelKeyPoint[i][j] = new Pixel(0, 0, 0, 0);
+            }
+        }
     }
 
 
@@ -327,22 +301,44 @@ public class Sift {
     }
 
     private Pixel[][] contrastFilter(Pixel[][] pixels) {
-        Pixel[][] pixels1 = new Pixel[pixels.length][pixels[0].length];
+        Pixel[][] newPixels = new Pixel[pixels.length][pixels[0].length];
+//        int k=0;
         for (int i = 0; i < pixels.length; i++) {
             for (int j = 0; j < pixels[0].length; j++) {
-                if (pixels[i][j].getR() < 4 && pixels[i][j].getR() > 0) {
-                    pixels1[i][j] = new Pixel(0, 0, 0, 0);
+                if (pixels[i][j].getR() < 2 && pixels[i][j].getR() > 0) {
+                    newPixels[i][j] = new Pixel(0, 0, 0, 0);
+//                    k++;
                 } else {
-                    pixels1[i][j] = new Pixel(pixels[i][j]);
+                    newPixels[i][j] = new Pixel(pixels[i][j]);
                 }
             }
         }
-        return pixels1;
+//        System.out.println("nbContrastRetire = "+k);
+        return newPixels;
     }
 
     private Pixel[][] edgeFilter(Pixel[][] pixels) {
+        Pixel[][] newPixels = new Pixel[pixels.length][pixels[0].length];
+        blackPixels(newPixels);
+//        int k=0;
+        for (int i = 1; i < pixels.length - 1; i++) {
+            for (int j = 1; j < pixels[0].length - 1; j++) {
+                if (pixels[i][j].getR() != 0) {
+                    if (!isCoin(pixels[i][j], pixels[i - 1][j], pixels[i + 1][j], pixels[i][j - 1], pixels[i][j + 1])) {
+                        newPixels[i][j] = new Pixel(0, 0, 0, 0);
+//                        k++;
+                    } else {
+                        newPixels[i][j] = new Pixel(pixels[i][j]);
+                    }
+                }
+            }
+        }
+//        System.out.println("nbNonCoinRetire = "+k);
+        return newPixels;
+    }
 
-        return pixels;
+    private boolean isCoin(Pixel p, Pixel pLeft, Pixel pRight, Pixel pDown, Pixel pUp) {
+        return (pRight.getR() - pLeft.getR()) / 2 > 0 && (pUp.getR() - pDown.getR()) / 2 > 0;
     }
 
 
