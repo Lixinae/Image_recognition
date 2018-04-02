@@ -22,17 +22,17 @@ public class Sift {
 
     private void applySiftIm() {
         listOctaveIm = ScaleSpace();
-        for (Octave o : listOctaveIm) {
+//        for (Octave o : listOctaveIm) {
 //            System.out.println(o);
-        }
+//        }
         keyPoint();
-        for (TheCon c : listConIm) {
+//        for (TheCon c : listConIm) {
 //            System.out.println(c);
-        }
+//        }
         DoG();
-        for (DoG d : listDoGIm) {
-            System.out.println(d);
-        }
+//        for (DoG d : listDoGIm) {
+//            System.out.println(d);
+//        }
         filtreDoG();
         for (DoG d : listDoGFilteredIm) {
             System.out.println(d);
@@ -320,27 +320,82 @@ public class Sift {
     private Pixel[][] edgeFilter(Pixel[][] pixels) {
         Pixel[][] newPixels = new Pixel[pixels.length][pixels[0].length];
         blackPixels(newPixels);
-//        int k=0;
+        int k = 0;
         for (int i = 1; i < pixels.length - 1; i++) {
             for (int j = 1; j < pixels[0].length - 1; j++) {
                 if (pixels[i][j].getR() != 0) {
-                    if (!isCoin(pixels[i][j], pixels[i - 1][j], pixels[i + 1][j], pixels[i][j - 1], pixels[i][j + 1])) {
+                    if (!isCoin(pixels, i, j)) {
                         newPixels[i][j] = new Pixel(0, 0, 0, 0);
-//                        k++;
+                        k++;
                     } else {
-                        newPixels[i][j] = new Pixel(pixels[i][j]);
+                        newPixels[i][j] = new Pixel(255, 255, 255, 1);
                     }
                 }
             }
         }
-//        System.out.println("nbNonCoinRetire = "+k);
+        System.out.println("nbNonCoinRetire = " + k);
         return newPixels;
     }
 
-    private boolean isCoin(Pixel p, Pixel pLeft, Pixel pRight, Pixel pDown, Pixel pUp) {
-        return (pRight.getR() - pLeft.getR()) / 2 > 0 && (pUp.getR() - pDown.getR()) / 2 > 0;
+    private boolean isCoin(Pixel[][] p, int u, int v) {
+        int x = 10;
+        int y = 10;
+        int threshold = 10000;
+        int sumIx = 0;
+        int sumIy = 0;
+        int sumIxIy = 0;
+
+        int Ix[] = new int[p.length];
+        for (int i = 0; i < p.length; i++) {
+            Ix[i] = p[i][v].getR();
+        }
+        int Iy[] = new int[p[0].length];
+        for (int i = 0; i < p[0].length; i++) {
+            Iy[i] = p[u][i].getR();
+        }
+
+
+        for (int i = 0; i < p.length; i++) {
+            if (Math.abs(i - x) < 10) {
+                sumIx += Ix[i] * Ix[i];
+            }
+        }
+        for (int i = 0; i < p[0].length; i++) {
+            if (Math.abs(i - y) < 10) {
+                sumIy += Iy[i] * Iy[i];
+            }
+        }
+        for (int i = u - 10, j = v - 10, k = 0; k < 20; k++) {
+            if (i < 0 || j < 0) {
+                continue;
+            }
+            if (i >= p.length || j >= p[0].length) {
+                break;
+            }
+            sumIxIy += Math.abs(Iy[j] * Ix[i]);
+        }
+
+
+        double A = sumIx;
+        double B = sumIy;
+        double C = sumIxIy;
+        System.out.println(A + " " + B + " " + C);
+        double R = Math.abs(R(A, B, C));
+        System.out.println(R);
+        return threshold < R;
     }
 
+    private double w(int u, int v) {
+        int sigma = 1;
+        return Math.exp(-(u * u + v * v)) / (2 * sigma);
+    }
+
+    private double R(double A, double B, double C) {
+        double k = 0.04;
+        double detM = A * B - C * C;
+        double traceM = A + B;
+        return detM - k * traceM * traceM;
+    }
 
     private void AssignOrientationKeyPoint() {
 
