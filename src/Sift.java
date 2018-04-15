@@ -347,11 +347,23 @@ public class Sift {
 
         int Ix[] = new int[p.length];
         for (int i = 0; i < p.length; i++) {
-            Ix[i] = p[i][v].getR();
+            int tmp = p[i][v].getR();
+            if (i + 1 != p.length) {
+                tmp = p[i + 1][v].getR() - tmp;
+            } else {
+                tmp = 0;
+            }
+            Ix[i] = tmp;
         }
         int Iy[] = new int[p[0].length];
         for (int i = 0; i < p[0].length; i++) {
-            Iy[i] = p[u][i].getR();
+            int tmp = p[u][i].getR();
+            if (i + 1 != p[0].length) {
+                tmp = p[u][i + 1].getR() - tmp;
+            } else {
+                tmp = 0;
+            }
+            Iy[i] = tmp;
         }
 
 
