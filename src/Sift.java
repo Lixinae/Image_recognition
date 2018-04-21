@@ -3,6 +3,7 @@ import org.apache.commons.math3.distribution.NormalDistribution;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -34,10 +35,9 @@ public class Sift {
 //            System.out.println(d);
 //        }
         filtreDoG();
-        for (DoG d : listDoGFilteredIm) {
-            System.out.println(d);
-        }
-
+//        for (DoG d : listDoGFilteredIm) {
+//            System.out.println(d);
+//        }
 
         System.out.println("fin");
     }
@@ -302,112 +302,198 @@ public class Sift {
 
     private Pixel[][] contrastFilter(Pixel[][] pixels) {
         Pixel[][] newPixels = new Pixel[pixels.length][pixels[0].length];
-//        int k=0;
         for (int i = 0; i < pixels.length; i++) {
             for (int j = 0; j < pixels[0].length; j++) {
                 if (pixels[i][j].getR() < 2 && pixels[i][j].getR() > 0) {
                     newPixels[i][j] = new Pixel(0, 0, 0, 0);
-//                    k++;
                 } else {
                     newPixels[i][j] = new Pixel(pixels[i][j]);
                 }
             }
         }
-//        System.out.println("nbContrastRetire = "+k);
         return newPixels;
     }
 
-    private Pixel[][] edgeFilter(Pixel[][] pixels) {
-        Pixel[][] newPixels = new Pixel[pixels.length][pixels[0].length];
-        blackPixels(newPixels);
-        int k = 0;
-        for (int i = 1; i < pixels.length - 1; i++) {
-            for (int j = 1; j < pixels[0].length - 1; j++) {
-                if (pixels[i][j].getR() != 0) {
-                    if (!isCoin(pixels, i, j)) {
-                        newPixels[i][j] = new Pixel(0, 0, 0, 0);
-                        k++;
-                    } else {
-                        newPixels[i][j] = new Pixel(255, 255, 255, 1);
+    private Pixel[][] edgeFilter(Pixel[][] p) {
+        int radius = 10;
+        int minMeasure = 15;
+        int minDistance = p.length / 100;
+        int height = p[0].length;
+        int width = p.length;
+        List<Corner> allCorner = new ArrayList<>();
+
+        Pixel[][] pReturn = new Pixel[width][height];
+
+        double[][] lx2 = new double[width][height];
+        double[][] ly2 = new double[width][height];
+        double[][] lxy = new double[width][height];
+
+        double[][][] grad = new double[width][height][];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                grad[x][y] = sob(p, x, y);
+            }
+        }
+
+        double[][] filter = new double[2 * radius + 1][2 * radius + 1];
+        double filtersum = 0;
+        for (int j = -radius; j <= radius; j++) {
+            for (int i = -radius; i <= radius; i++) {
+                double g = gaussian(i, j, im.getSigma());
+                filter[i + radius][j + radius] = g;
+                filtersum += g;
+            }
+        }
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+
+                for (int dy = -radius; dy <= radius; dy++) {
+                    for (int dx = -radius; dx <= radius; dx++) {
+                        int xk = x + dx;
+                        int yk = y + dy;
+                        if (xk < 0 || xk >= width) continue;
+                        if (yk < 0 || yk >= height) continue;
+
+                        // filter weight
+                        double f = filter[dx + radius][dy + radius];
+
+                        // convolution
+                        lx2[x][y] += f * grad[xk][yk][0] * grad[xk][yk][0];
+                        ly2[x][y] += f * grad[xk][yk][1] * grad[xk][yk][1];
+                        lxy[x][y] += f * grad[xk][yk][0] * grad[xk][yk][1];
                     }
                 }
+                lx2[x][y] /= filtersum;
+                ly2[x][y] /= filtersum;
+                lxy[x][y] /= filtersum;
             }
         }
-        System.out.println("nbNonCoinRetire = " + k);
-        return newPixels;
-    }
+        // Harris measure map
+        double[][] harrismap = new double[width][height];
+        double max = 0;
 
-    private boolean isCoin(Pixel[][] p, int u, int v) {
-        int x = 10;
-        int y = 10;
-        int threshold = 10000;
-        int sumIx = 0;
-        int sumIy = 0;
-        int sumIxIy = 0;
-
-        int Ix[] = new int[p.length];
-        for (int i = 0; i < p.length; i++) {
-            int tmp = p[i][v].getR();
-            if (i + 1 != p.length) {
-                tmp = p[i + 1][v].getR() - tmp;
-            } else {
-                tmp = 0;
+        // for each pixel in the image
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                // compute ans store the harris measure
+                harrismap[x][y] = R(x, y, lx2, lxy, ly2);
+                if (harrismap[x][y] > max) max = harrismap[x][y];
             }
-            Ix[i] = tmp;
-        }
-        int Iy[] = new int[p[0].length];
-        for (int i = 0; i < p[0].length; i++) {
-            int tmp = p[u][i].getR();
-            if (i + 1 != p[0].length) {
-                tmp = p[u][i + 1].getR() - tmp;
-            } else {
-                tmp = 0;
-            }
-            Iy[i] = tmp;
         }
 
+        // rescale measures in 0-100
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                double h = harrismap[x][y];
+                if (h < 0) h = 0;
+                else h = 100 * Math.log(1 + h) / Math.log(1 + max);
+                harrismap[x][y] = h;
+            }
+        }
 
-        for (int i = 0; i < p.length; i++) {
-            if (Math.abs(i - x) < 10) {
-                sumIx += Ix[i] * Ix[i];
+        // copy of the original image (a little darker)
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                Pixel cpy = new Pixel((int) (p[x][y].getR() * 0.80));
+                pReturn[x][y] = cpy;
             }
         }
-        for (int i = 0; i < p[0].length; i++) {
-            if (Math.abs(i - y) < 10) {
-                sumIy += Iy[i] * Iy[i];
+
+        // for each pixel in the hmap, keep the local maxima
+        for (int y = 1; y < height - 1; y++) {
+            for (int x = 1; x < width - 1; x++) {
+                double h = harrismap[x][y];
+                if (h < minMeasure) continue;
+                if (!isSpatialMaxima(harrismap, (int) x, (int) y)) continue;
+                // add the corner to the list
+//              getCorner(canal).add( new Corner(x,y,h) );
+                allCorner.add(new Corner(x, y, h));
+                pReturn[x][y] = new Pixel(255);
             }
         }
-        for (int i = u - 10, j = v - 10, k = 0; k < 20; k++) {
-            if (i < 0 || j < 0) {
-                continue;
-            }
-            if (i >= p.length || j >= p[0].length) {
+
+        Iterator<Corner> iter = allCorner.iterator();
+        while (iter.hasNext()) {
+            Corner c = iter.next();
+            for (Corner ctmp : allCorner) {
+                if (ctmp == c) continue;
+                int dist = (int) Math.sqrt((c.x - ctmp.x) * (c.x - ctmp.x) + (c.y - ctmp.y) * (c.y - ctmp.y));
+                if (dist > minDistance) continue;
+                if (ctmp.measure < c.measure) continue;
+                iter.remove();
+                p[c.x][c.y] = new Pixel(0);
                 break;
             }
-            sumIxIy += Math.abs(Iy[j] * Ix[i]);
         }
 
-
-        double A = sumIx;
-        double B = sumIy;
-        double C = sumIxIy;
-        System.out.println(A + " " + B + " " + C);
-        double R = Math.abs(R(A, B, C));
-        System.out.println(R);
-        return threshold < R;
+//        // Display corners over the image (cross)
+//        for (Corner p:getCorner(canal)) {
+//            for (int dx=-2; dx<=2; dx++) {
+//                if (p.x+dx<0 || p.x+dx>=width) continue;
+//                setInsidePixel(output, (int)p.x+dx, (int)p.y, canal, 255);
+//            }
+//            for (int dy=-2; dy<=2; dy++) {
+//                if (p.y+dy<0 || p.y+dy>=height) continue;
+//                setInsidePixel(output, (int)p.x,(int)p.y+dy, canal, 255);
+//            }
+//        }
+        return pReturn;
     }
 
-    private double w(int u, int v) {
-        int sigma = 1;
-        return Math.exp(-(u * u + v * v)) / (2 * sigma);
+    private double gaussian(double x, double y, double sigma2) {
+        double t = (x * x + y * y) / (2 * sigma2);
+        double u = 1.0 / (2 * Math.PI * sigma2);
+        double e = u * Math.exp(-t);
+        return e;
     }
 
-    private double R(double A, double B, double C) {
-        double k = 0.04;
-        double detM = A * B - C * C;
-        double traceM = A + B;
-        return detM - k * traceM * traceM;
+    private double[] sob(Pixel[][] p, int x, int y) {
+        int x0 = x - 1, x1 = x, x2 = x + 1;
+        int y0 = y - 1, y1 = y, y2 = y + 1;
+        int height = p[0].length;
+        int width = p.length;
+        if (x0 < 0) x0 = 0;
+        if (y0 < 0) y0 = 0;
+        if (x2 >= width) x2 = width - 1;
+        if (y2 >= height) y2 = height - 1;
+
+        double sobx = (p[x2][y0].getR() + 2 * p[x2][y1].getR() + p[x2][y2].getR()) - (p[x0][y0].getR() + 2 * p[x0][y1].getR() + p[x0][y2].getR());
+        double soby = (p[x0][y2].getR() + 2 * p[x1][y2].getR() + p[x2][y2].getR()) - (p[x0][y0].getR() + 2 * p[x1][y0].getR() + p[x2][y0].getR());
+        return new double[]{sobx / 4, soby / 4};
     }
+
+    private double R(int x, int y, double[][] lx2, double[][] lxy, double[][] ly2) {
+        double m00 = lx2[x][y];
+        double m01 = lxy[x][y];
+        double m10 = lxy[x][y];
+        double m11 = ly2[x][y];
+        return m00 * m11 - m01 * m10 - 0.06 * (m00 + m11) * (m00 + m11);
+    }
+
+    private boolean isSpatialMaxima(double[][] hmap, int x, int y) {
+        int n = 8;
+        int[] dx = new int[]{-1, 0, 1, 1, 1, 0, -1, -1};
+        int[] dy = new int[]{-1, -1, -1, 0, 1, 1, 1, 0};
+        double w = hmap[x][y];
+        for (int i = 0; i < n; i++) {
+            double wk = hmap[x + dx[i]][y + dy[i]];
+            if (wk >= w) return false;
+        }
+        return true;
+    }
+
+    private class Corner {
+        int x, y;
+        double measure;
+
+        Corner(int x, int y, double measure) {
+            this.x = x;
+            this.y = y;
+            this.measure = measure;
+        }
+    }
+
 
     private void AssignOrientationKeyPoint() {
 
@@ -421,4 +507,9 @@ public class Sift {
         return 0.0;
     }
 
+
+
+    /* aider par Copyright 2009 by Humbert Florent pour harris corner detector
+    lien : http://subversion.developpez.com/projets/Millie/trunk/Millie/src/millie/operator/detection/HarrisFastDetectionOperator.java
+     */
 }
