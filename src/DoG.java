@@ -9,9 +9,6 @@ public class DoG {
         if (images.size() != 2) {
             throw new IllegalArgumentException();
         }
-        for (int i = 0; i < images.size(); i++) {
-            images.get(i).addSuffixeName("DoG" + i);
-        }
         dog.addAll(images);
     }
 

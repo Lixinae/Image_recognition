@@ -8,9 +8,6 @@ public class Octave {
         if (images.size() != 5) {
             throw new IllegalArgumentException();
         }
-        for (int i = 0; i < images.size(); i++) {
-            images.get(i).addSuffixeName("octave " + i);
-        }
         octave.addAll(images);
     }
 

@@ -24,20 +24,21 @@ public class Image {
     private double sigma = 0.5;
     private Sift s;
 
-    public Image(int id_image, String pathToImage) {
+    public Image(int id_image, String pathToImage, boolean withSift) {
         this.id_image = id_image;
         this.pathToImage = pathToImage;
         this.name = constructName(pathToImage);
         initPixelTab();
         build();
-        s = new Sift(this);
+        if (withSift) {
+            s = new Sift(this);
+        }
     }
 
     public Image(Image im, double scale) {
-        //TODO modif id image? a voir comment s'en servir
         this.id_image = im.id_image;
         this.pathToImage = im.pathToImage;
-        this.name = im.name + "resize" + scale;
+        this.name = im.name + "_resize_" + scale;
         this.scale = scale;
         this.sigma = im.sigma;
         copyResized(im);
@@ -51,7 +52,7 @@ public class Image {
      * @param height
      */
     public Image(int width, int height) {
-        this.name = "constructedImage " + width + " " + height;
+        this.name = "Image_size_" + width + "_" + height;
         this.id_image = -1;
         this.width = width;
         this.height = height;
@@ -143,20 +144,7 @@ public class Image {
             }
         }
 
-        System.out.println("coef0 = " + coef0);
-        System.out.println("coef1 = " + coef1);
-        System.out.println("coef2 = " + coef2);
-        System.out.println("coef3 = " + coef3);
-        System.out.println("coef4 = " + coef4);
-
         return coef0 + coef1 + coef2 + coef3 + coef4;
-
-//        double d;
-//        double r = Math.abs(image.moyenne_rgb.getR()-moyenne_rgb.getR());
-//        double g = Math.abs(image.moyenne_rgb.getG()-moyenne_rgb.getG());
-//        double b = Math.abs(image.moyenne_rgb.getB()-moyenne_rgb.getB());
-//        d=r+g+b;
-//        return d;
     }
 
 

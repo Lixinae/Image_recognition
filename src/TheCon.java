@@ -10,9 +10,6 @@ public class TheCon {
         if (images.size() != 4) {
             throw new IllegalArgumentException();
         }
-        for (int i = 0; i < images.size(); i++) {
-            images.get(i).addSuffixeName("Con" + i);
-        }
         con.addAll(images);
     }
 

@@ -23,23 +23,23 @@ public class Sift {
 
     private void applySiftIm() {
         listOctaveIm = ScaleSpace();
-//        for (Octave o : listOctaveIm) {
-//            System.out.println(o);
-//        }
+        for (Octave o : listOctaveIm) {
+            System.out.println(o);
+        }
         keyPoint();
-//        for (TheCon c : listConIm) {
-//            System.out.println(c);
-//        }
+        for (TheCon c : listConIm) {
+            System.out.println(c);
+        }
         DoG();
-//        for (DoG d : listDoGIm) {
-//            System.out.println(d);
-//        }
+        for (DoG d : listDoGIm) {
+            System.out.println(d);
+        }
         filtreDoG();
-//        for (DoG d : listDoGFilteredIm) {
-//            System.out.println(d);
-//        }
+        for (DoG d : listDoGFilteredIm) {
+            System.out.println(d);
+        }
 
-        System.out.println("fin");
+        System.out.println("finSIFT");
     }
 
     /**
@@ -168,8 +168,8 @@ public class Sift {
             }
         }
 
+        result.addSuffixeName(String.valueOf((int) sigma));
         return result;
-
     }
 
 
@@ -189,13 +189,13 @@ public class Sift {
         for (Octave o : listOctaveIm) {
             List<Image> oct = o.getOctave();
             List<Image> con = new ArrayList<>();
-            con.add(new Image("con" + oct.get(0).getName() + i, diffImage(oct.get(0).getTabPixel(), oct.get(1).getTabPixel())));
+            con.add(new Image("keypoint_" + oct.get(0).getName() + i, diffImage(oct.get(0).getTabPixel(), oct.get(1).getTabPixel())));
             i++;
-            con.add(new Image("con" + oct.get(1).getName() + i, diffImage(oct.get(1).getTabPixel(), oct.get(2).getTabPixel())));
+            con.add(new Image("keypoint_" + oct.get(1).getName() + i, diffImage(oct.get(1).getTabPixel(), oct.get(2).getTabPixel())));
             i++;
-            con.add(new Image("con" + oct.get(2).getName() + i, diffImage(oct.get(2).getTabPixel(), oct.get(3).getTabPixel())));
+            con.add(new Image("keypoint_" + oct.get(2).getName() + i, diffImage(oct.get(2).getTabPixel(), oct.get(3).getTabPixel())));
             i++;
-            con.add(new Image("con" + oct.get(3).getName() + i, diffImage(oct.get(3).getTabPixel(), oct.get(4).getTabPixel())));
+            con.add(new Image("keypoint_" + oct.get(3).getName() + i, diffImage(oct.get(3).getTabPixel(), oct.get(4).getTabPixel())));
             i++;
             listConIm.add(new TheCon(con));
         }
@@ -208,8 +208,8 @@ public class Sift {
         for (TheCon c : listConIm) {
             List<Image> con = c.getCon();
             List<Image> dog = new ArrayList<>();
-            dog.add(new Image("dog" + con.get(0).getName() + i, findKeyPoint(con.get(0).getTabPixel(), con.get(1).getTabPixel(), con.get(2).getTabPixel())));
-            dog.add(new Image("dog" + con.get(0).getName() + i, findKeyPoint(con.get(1).getTabPixel(), con.get(2).getTabPixel(), con.get(3).getTabPixel())));
+            dog.add(new Image("dog_" + con.get(0).getName() + i, findKeyPoint(con.get(0).getTabPixel(), con.get(1).getTabPixel(), con.get(2).getTabPixel())));
+            dog.add(new Image("dog_" + con.get(0).getName() + i, findKeyPoint(con.get(1).getTabPixel(), con.get(2).getTabPixel(), con.get(3).getTabPixel())));
             listDoGIm.add(new DoG(dog));
             i++;
         }
@@ -220,8 +220,8 @@ public class Sift {
         for (DoG d : listDoGIm) {
             List<Image> dog = d.getDoG();
             List<Image> dogF = new ArrayList<>();
-            dogF.add(new Image("dogF" + dog.get(0).getName() + i, RidBadKeyPoint(dog.get(0).getTabPixel())));
-            dogF.add(new Image("dogF" + dog.get(0).getName() + i, RidBadKeyPoint(dog.get(1).getTabPixel())));
+            dogF.add(new Image("dogFiltered_" + dog.get(0).getName() + i, RidBadKeyPoint(dog.get(0).getTabPixel())));
+            dogF.add(new Image("dogFiltered_" + dog.get(0).getName() + i, RidBadKeyPoint(dog.get(1).getTabPixel())));
             listDoGFilteredIm.add(new DoG(dogF));
             i++;
         }
